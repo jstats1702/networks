@@ -153,8 +153,12 @@ Ver por ejemplo:
 
 # Software
 
-- R: **igraph**, statnet, network, sna, tidygraph.
-- Python: **igraph**, **Network**, Graph-tool, Networkit.
+Los paquetes [igraph](https://igraph.org/) (R y Python) y [NetworkX](https://networkx.org/) (Python) proporcionan herramientas versátiles para la visualización y el análisis de redes. 
+
+Más alternativas:
+
+- **R**: statnet, network, sna, tidygrap, ggnet2, ggraph, networkD3.
+- **Python**: Graph-tool, Networkit.
 
 
 # Fuentes de datos
