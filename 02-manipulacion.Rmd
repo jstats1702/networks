@@ -1,5 +1,5 @@
 ---
-title: "Manipulación de datos relacionales"
+title: "Gestión de datos relacionales"
 author: 
 - Juan Sosa PhD
 - Email   jcsosam@unal.edu.co
