@@ -5,4 +5,5 @@ Materiales del curso de Análisis Estadístico de Redes Sociales ofreciendo en e
 ## Contenido
 
 1. Introducción.
-2. Manipulación de datos relacionales.
+2. Gestión de datos relacionales.
+3. Conceptos fundamentales de teoría de grafos.
