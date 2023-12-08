@@ -204,7 +204,7 @@ knitr::include_graphics("02_cycle.png")
 Los grafos que no contienen ciclos se denominan **acíclicos** (*acycle*).
 
 
-## Conectividad {-}
+# Conectividad
 
 Se dice que un vértice $v$ es **accesible** (*reachable*) desde otro vértice $u$ si existe una caminata desde $u$ hasta $v$. 
 
