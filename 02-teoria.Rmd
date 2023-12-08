@@ -32,7 +32,7 @@ knitr::include_graphics("02_subgraph.png")
 ```
 
 
-# Grafos isomorfos
+# Isomorfismo
 
 Dos grafos que son **equivalentes estructuralmente** (a pesar de las etiquetas de los vértices) se denominan **isomorfos**. 
 
