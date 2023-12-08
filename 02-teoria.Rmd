@@ -17,12 +17,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-# Grafos
+# Grafos y subgrafos
+
+## Grafos {-}
 
 Un **grafo** $G = (V, E)$ es una estructura que consiste de un conjunto de **vértices** (nodos) $V$ y de un conjunto de **aristas** (enlaces) $E$, donde los elementos de $E$ son parejas de la forma $e=\{u,v\}$, con $u,v\in V$. 
 
-
-# Subgrafos
+## Subgrafos {-}
 
 Un grafo $G'=(V',E')$ es un **subgrafo** de $G=(V,E)$ si $V'\subset V$ y $E'\subset E$.
 
