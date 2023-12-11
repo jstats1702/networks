@@ -33,7 +33,7 @@ La **teoría de grafos** es fundamental para analizar redes sociales.
 
 # Grafos
 
-Un **grafo** $G = (V, E)$ es una estructura que consiste de un conjunto de **vértices** (nodos) $V$ y de un conjunto de **aristas** (enlaces) $E$. Los elementos de $E$ son parejas de la forma $e=\{u,v\}$, con $u,v\in V$. 
+Un **grafo** $G = (V, E)$ es una estructura que consiste de un conjunto de **vértices** (nodos) $V$ y de un conjunto de **aristas** (enlaces) $E$, donde los elementos de $E$ son parejas de la forma $e=\{u,v\}$, con $u,v\in V$. 
 
 El **número de vértices** $|V|$ y el **número de aristas** $|E|$ se conocen como el **orden** y el **tamaño** del grafo, respectivamente.
 
@@ -259,16 +259,17 @@ print(A)
 
 ## Ejemplo: Trabajo colaborativo
 
-Red de **relaciones de trabajo colaborativo** entre miembros de una firma de abogados (SG&R). 
+Red de **relaciones de trabajo colaborativo** entre los miembros de una firma de abogados (SG&R). 
 
 Estos datos fueron recolectados para **estudiar la cooperación** entre los actores de una organización.
 
-$y_{i,j} = 1$ si los individuos $i$ y $j$ han trabajado juntos en al menos un caso y $y_{i,j} = 0$ en otro caso.
+$y_{i,j} = 1$ si los miembros $i$ y $j$ **trabajaron juntos** en al menos un caso y $y_{i,j} = 0$ en otro caso.
 
 Una descripción completa de los datos se puede encontrar [aquí](https://www.stats.ox.ac.uk/~snijders/siena/Lazega_lawyers_data.htm).
 
-Lazega, E. (2001). **The collegial phenomenon: The social mechanisms of cooperation among peers in a corporate law partnership**. Oxford University Press on Demand.
+Disponible en el paquete `sand` de R.
 
+Lazega, E. (2001). **The collegial phenomenon: The social mechanisms of cooperation among peers in a corporate law partnership**. Oxford University Press on Demand.
 
 ```{r}
 # install.packages("sand")
