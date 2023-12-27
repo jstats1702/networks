@@ -1,5 +1,5 @@
 ---
-title: "Caracterización de la conectividad"
+title: "Caracterización de conectividad"
 author: 
 - Juan Sosa PhD
 - Email   jcsosam@unal.edu.co
