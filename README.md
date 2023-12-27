@@ -8,3 +8,5 @@ Materiales del curso de Análisis Estadístico de Redes Sociales ofreciendo en e
 2. Gestión de datos relacionales.
 3. Conceptos fundamentales de teoría de grafos.
 4. Visualización de datos relacionales.
+5. Caracterización de vértices.
+6. Caracterización de conectividad.
