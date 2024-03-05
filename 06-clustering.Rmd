@@ -278,7 +278,7 @@ d <- tmp$d
 # visualización
 par(mfrow = c(1,2))
 heat.plot0(mat = Y)
-heat.plot0(mat = A, col.axis = c("darkgoldenrod3","deepskyblue3","forestgreen")[xi2])
+heat.plot0(mat = A, col.axis = c("darkgoldenrod3","deepskyblue3","forestgreen")[xi2], labs = (1:vcount(karate))[order(xi)])
 abline(v = d+.5, h = d+.5)
 ```
 
