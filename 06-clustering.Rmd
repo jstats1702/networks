@@ -16,6 +16,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 # Introducción
 
 El **agrupamiento** (*clustering*/*partitioning*) se refiere a la **segmentación** de un conjunto de elementos en **subconjuntos "naturales"**.
@@ -83,9 +84,9 @@ knitr::include_graphics("06_clustering_mod.png")
 
 # Particionamiento espectral
 
-El método general de agrupación espectral consiste en utilizar un **método de agrupación estándar** usando los vectores propios más relevantes de la **matriz Laplaciana** de $\mathbf{A}$ dada por $\mathbf{L} = \mathbf{D} - \mathbf{A}$, donde $\mathbf{A} = [a_{k,\ell}]$ es una **matriz de modularidad** y $\mathbf{D} = \textsf{diag}(d_1,\ldots,d_K)$ es una **matriz diagonal** con entradas
+El método general de agrupación espectral consiste en utilizar un **método de agrupación estándar** usando los vectores propios más relevantes de la **matriz Laplaciana** de $\mathbf{A}$ dada por $\mathbf{L} = \mathbf{D} - \mathbf{A}$, donde $\mathbf{A} = [a_{i,j}]$ es una **matriz de modularidad** y $\mathbf{D} = \textsf{diag}(d_1,\ldots,d_n)$ es una **matriz diagonal** con entradas
 $$
-d_k = \sum_{\ell} a_{k,\ell}\,.
+d_i = \sum_{j} a_{i,j}\,.
 $$
 
 La **matriz de modularidad** (*modularity matrix*) de un grafo $G=(V,E)$ con matriz de adyacencia $\mathbf{Y}$ corresponde a la matriz $\mathbf{A} = [a_{i,j}]$, donde
@@ -191,7 +192,7 @@ is_weighted(karate)
 
 
 ```{r, fig.height = 6, fig.width = 12, fig.align='center'}
-# visualizacion
+# visualización
 par(mfrow = c(1,2))
 set.seed(123)
 l = layout_with_dh(karate)
@@ -305,7 +306,7 @@ kc_infomap <- cluster_infomap(karate)
 
 
 ```{r, fig.width=12, fig.height=12, fig.align='center'}
-# graficos
+# gráficos
 igraph_options(vertex.size = 10, vertex.frame.color = "black")
 par(mfrow = c(3,3))
 plot(karate, vertex.label = NA, layout = l, vertex.color = kc_fast_greedy$membership, main = paste0("fast greedy: ", "Mod = ", round(modularity(kc_fast_greedy), 4)))
@@ -335,6 +336,138 @@ compare(comm1 = fc, comm2 = kc_leading_eigen$membership, method = "rand")
 table(fc, kc_fast_greedy$membership)
 table(fc, kc_leading_eigen$membership)
 ```
+
+# Ejemplo: Simulación
+
+Considere el **modelo de bloques aleatorios** dado por
+$$
+y_{i,j}\mid\xi_i,\xi_j,\Theta \sim\textsf{Ber}(\theta_{\phi(\xi_i,\xi_j)})\,,\qquad \text{para} 1\leq i<j\leq n\,,
+$$
+donde:
+
+* $n$ : número de nodos de la red.
+* $\xi_i$ : indicadora de cluster del nodo $i$, i.e., $\xi_i=k$ indica que el nodo $i$ hace parte del cluster $k$, para $k=1,\ldots,K$. 
+* $\Theta$ : matriz simétrica de $K\times K$ constituida por las probabilidades de interacción intra e inter cluster.
+* $\phi(x,y)$ : función de valor vectorial definida por $\phi(x,y)= (\min(x,y),\max(x,y))$.
+
+A continuación se genera una red de acuerdo con este modelo con grupos de aproximadamente el mismo tamaño usando $n = 100$, $K = 4$ y
+$$
+\Theta = 
+\begin{bmatrix}
+0.05 & 0.05 & 0.05 & 0.05 \\
+0.05 & 0.10 & 0.05 & 0.05 \\
+0.05 & 0.05 & 0.20 & 0.05 \\
+0.05 & 0.05 & 0.05 & 0.40 \\
+\end{bmatrix}\,.
+$$
+
+```{r}
+# funciones
+#
+phi <- function(x, y) c(min(x,y), max(x, y))
+#
+sim_blocks <- function (n, p, Theta) {
+     # simulación redes no dirigidas (modelo de bloques estocásticos)
+     K  <- length(p) 
+     xi <- sample(x = 1:K, size = n, replace = T, prob = p)
+     Y  <- matrix(data = 0, nrow = n, ncol = n)
+     for (i in 1:(n-1)) {
+          for (j in (i+1):n) {
+               index <- phi(xi[i], xi[j])
+               Y[i,j] <- Y[j,i] <- rbinom(n = 1, size = 1, prob = Theta[index[1], index[2]])
+          }
+     }
+     list(Y = Y, xi = xi)
+}
+```
+
+
+```{r}
+# argumentos
+n <- 100 
+p <- rep(0.25, 4)
+Theta <- matrix(0.05, 4, 4)
+diag(Theta) <- c(0.05, 0.1, 0.2, 0.4)
+# simulación
+set.seed(1)
+tmp <- sim_blocks(n, p, Theta)
+Y  <- tmp$Y
+xi <- tmp$xi
+```
+
+
+```{r}
+# asignaciones ordenadas 
+xi2 <- xi[order(xi)]
+# matriz de adyacencia ordenada y lineas divisorias de acuerdo con las comunidades
+tmp <- get_adjacency_ordered(xi = xi, A = Y)
+Y <- tmp$A
+d <- tmp$d
+g <- graph_from_adjacency_matrix(adjmatrix = Y, mode = "undirected")
+```
+
+
+```{r, fig.height = 6, fig.width = 12, fig.align='center'}
+# visualización
+par(mfrow = c(1,2))
+set.seed(123)
+plot(g, layout = layout_with_fr, vertex.label = NA, vertex.size = 6, vertex.frame.color = xi2, vertex.color = xi2, main = "")
+heat.plot0(mat = Y, labs = F, tick = F)
+abline(v = d+.5, h = d+.5)
+```
+Ahora, con el fin de establecer la idoneidad de los métodos de agrupamiento, se agrupa la red simulada utilizando algunos métodos de agrupamiento y luego se compara la partición real con la partición recuperado por medio de los métodos:
+
+```{r}
+# agrupamiento
+c1 <- cluster_fast_greedy  (g)
+c2 <- cluster_leading_eigen(g)
+c3 <- cluster_walktrap     (g)
+c4 <- cluster_louvain      (g)
+# comparación usando el índice de rand
+out <- c(compare(comm1 = xi, comm2 = c1$membership, method = "rand"),
+         compare(comm1 = xi, comm2 = c2$membership, method = "rand"),
+         compare(comm1 = xi, comm2 = c3$membership, method = "rand"),
+         compare(comm1 = xi, comm2 = c4$membership, method = "rand"))
+names(out) <- c("fast_greedy","leading_eigen","walktrap","louvain")
+round(out, 3)
+```
+
+# Ejemplo: Simulación (cont.)
+
+A continuación se remite el experimento del ejemplo anterior $N = 100$ veces:
+
+```{r}
+# experimento
+N <- 100
+out <- matrix(NA, nrow = N, ncol = 4)
+colnames(out) <- c("fast_greedy","leading_eigen","walktrap","louvain")
+set.seed(123)
+for (i in 1:N) {
+     # simular datos
+     tmp <- sim_blocks(n, p, Theta)
+     g   <- graph_from_adjacency_matrix(adjmatrix = tmp$Y, mode = "undirected")
+     xi  <- tmp$xi
+     # agrupamiento
+     c1 <- cluster_fast_greedy  (g)
+     c2 <- cluster_leading_eigen(g)
+     c3 <- cluster_walktrap     (g)
+     c4 <- cluster_louvain      (g)
+     # comparación
+     out[i,] <- c(compare(comm1 = xi, comm2 = c1$membership, method = "rand"),
+                  compare(comm1 = xi, comm2 = c2$membership, method = "rand"),
+                  compare(comm1 = xi, comm2 = c3$membership, method = "rand"),
+                  compare(comm1 = xi, comm2 = c4$membership, method = "rand"))
+}
+```
+
+
+```{r}
+# promedio de índice de rand
+round(colMeans(out), 3)
+# coeficiente de variación
+round(apply(X = out, MARGIN = 2, FUN = sd)/colMeans(out), 3)
+```
+
 
 
 # Referencias
