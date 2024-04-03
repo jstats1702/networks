@@ -11,3 +11,4 @@ Materiales del curso de Análisis Estadístico de Redes Sociales ofreciendo en e
 5. Caracterización de vértices.
 6. Caracterización de conectividad.
 7. Agrupamiento.
+8. Análisis de texto.
