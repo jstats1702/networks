@@ -12,3 +12,8 @@ Materiales del curso de Análisis Estadístico de Redes Sociales ofreciendo en e
 6. Caracterización de conectividad.
 7. Agrupamiento.
 8. Análisis de texto.
+9. Modelos de grafos aleatorios.
+10. Modelos de grafos aleatorios generalizados.
+11. Modelos de grafos aleatorios exponenciales.
+12. Modelos de bloques estocásticos.
+13. Modelos de espacio latente.
