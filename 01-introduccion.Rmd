@@ -198,5 +198,3 @@ knitr::include_graphics("01_cover_AK.jpg")
 ```{r, eval = TRUE, echo=FALSE, out.width="25%", fig.pos = 'H', fig.align = 'center'}
 knitr::include_graphics("01_cover_Newman.jpg")
 ```
-
-

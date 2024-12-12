@@ -280,7 +280,6 @@ ecount(yeast)
 is_directed(yeast)
 # ponderada?
 is_weighted(yeast)
-
 ```
 
 
@@ -432,7 +431,7 @@ dc <- degree          (graph = karate, normalized = T)
 cc <- closeness       (graph = karate, normalized = T)
 bc <- betweenness     (graph = karate, normalized = T)
 ec <- eigen_centrality(graph = karate, scale = T)$vector
-# visualizacion
+# visualización
 par(mfrow = c(2,2), mar = c(4, 3, 3, 1))
 set.seed(123)
 l <- layout_with_dh(karate)
@@ -495,7 +494,7 @@ as <- igraph::authority_score(graph = aidsblog, scale = T)$vector
 
 
 ```{r, fig.height = 7, fig.width = 14, fig.align='center'}
-# ´visualización
+# visualización
 set.seed(123)
 l <- layout_with_kk(aidsblog)
 par(mfrow = c(1,2), mar = c(4, 3, 3, 1))

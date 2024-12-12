@@ -20,38 +20,38 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introducción
 
-Un **modelo estadístico** es una **colección de distribuciones de probabilidad** indexadas por un **parámetro de dimensión finita** desconocido:
+Un **modelo estadístico** se define como una **colección de distribuciones de probabilidad** parametrizadas por un **parámetro de dimensión finita** desconocido:  
 $$
-\mathcal{P} = \{p(\mathbf{Y}\mid\theta):\mathbf{Y}\in\mathcal{Y}\,\,\text{ y }\,\,\theta\in\Theta\}
-$$
-donde:
+\mathcal{P} = \{p(\mathbf{Y}\mid\theta) : \mathbf{Y} \in \mathcal{Y}, \, \theta \in \Theta\}
+$$  
+donde:  
 
-- $\theta$ es un parámetro desconocido.
-- $\Theta$ es el espacio de parámetros, i.e., el conjunto de todos los valores que puede asumir $\theta$.
-- $\mathbf{Y}$ es una matriz de adyacencia.
-- $\mathcal{Y}$ es el conjunto de todas las posibles matrices de adyacencia.
-- $p(\mathbf{Y}\mid\theta)$ es la distribución probabilística de $\mathbf{Y}\in\mathcal{Y}$ para un valor particular de $\theta$.
+- $\theta$ representa un parámetro desconocido.  
+- $\Theta$ es el espacio de parámetros, es decir, el conjunto de todos los valores posibles de $\theta$.  
+- $\mathbf{Y}$ es una matriz de adyacencia que describe las relaciones en una red.  
+- $\mathcal{Y}$ es el conjunto de todas las matrices de adyacencia posibles.  
+- $p(\mathbf{Y}\mid\theta)$ denota la distribución de probabilidad de $\mathbf{Y}$ para un valor dado de $\theta$.  
 
-Los modelos estadísticos **tienen como objetivo**:
+El propósito principal de los modelos estadísticos es:  
 
-- Investigar el proceso generativo de la red.
-- Caracterizar aspectos locales y estructurales.
-- Evaluar asociaciones entre las variables nodales y relacionales.
-- Imputar relaciones faltantes.
-- Predecir relaciones futuras.
+- Explorar el proceso generativo que da lugar a la red.  
+- Caracterizar propiedades locales y estructurales.  
+- Analizar asociaciones entre variables nodales y relacionales.  
+- Imputar relaciones faltantes.  
+- Predecir relaciones futuras.  
 
-Los modelos estadísticos permiten **cuantificar la incertidumbre** asociada con estos procesos.
+Además, estos modelos permiten **cuantificar la incertidumbre** inherente a dichos procesos.  
 
-La riqueza del modelo se deriva en **cómo especificar** $p(\mathbf{Y}\mid\theta)$:
+La especificación de $p(\mathbf{Y}\mid\theta)$ es clave para determinar la riqueza del modelo, lo cual puede abordarse mediante diversas aproximaciones, entre ellas:  
 
-- Modelo de grafos aleatorios.
-- Modelo de grafos aleatorios generalizado.
-- Modelo de mundo pequeño.
-- Modelo de fijación preferencial.
-- Modelo de grafos aleatorios exponenciales.
-- Modelo de bloques estocásticos.
-- Modelo de espacio latente de distancia.
-- Modelo de espacio latente factorial.
+- Modelos de grafos aleatorios.  
+- Modelos de grafos aleatorios generalizados.  
+- Modelos de mundo pequeño.  
+- Modelos de fijación preferencial.  
+- Modelos de grafos aleatorios exponenciales.  
+- Modelos de bloques estocásticos.  
+- Modelos de espacio latente de distancia.  
+- Modelos de espacio latente factorial.  
 
 ```{r, eval = TRUE, echo=FALSE, out.width="45%", fig.pos = 'H', fig.align = 'center'}
 knitr::include_graphics("modelos_box.png")
@@ -59,33 +59,40 @@ knitr::include_graphics("modelos_box.png")
 
 # Modelo de grafos aleatorios
 
-El término **modelo de grafo aleatorio simple** (*simple random graph model*) o **modelo de grafo aleatorio** (*random graph model*) se usa para referirse a un modelo en el que:
+El término **modelo de grafo aleatorio simple** (*simple random graph model*) o **modelo de grafo aleatorio** (*random graph model*) se refiere a un modelo en el que:  
 
-- Las aristas surgen de **manera independiente**.
-- Las aristas tienen una **probabilidad común** de formación $\theta\in\Theta=(0,1)$.
+- Las aristas se forman de manera **independiente**.  
+- Cada arista tiene una **probabilidad común** de existencia, $\theta\in\Theta=(0,1)$.  
 
-Las entradas de $\mathbf{Y}$ son **independientes e idénticamente distribuidas** (iid) de acuerdo con una distribución Bernoulli con parámetro $\theta$:
+En este modelo, las entradas de la matriz de adyacencia $\mathbf{Y}$ son **independientes e idénticamente distribuidas** (iid) según una distribución Bernoulli con parámetro $\theta$:  
 $$
-y_{i,j}\mid\theta\stackrel{\text{iid}}{\sim} \textsf{Bernoulli}(\theta)
+y_{i,j} \mid \theta \stackrel{\text{iid}}{\sim} \textsf{Bernoulli}(\theta),
+$$  
+lo que implica que la función de probabilidad conjunta es:  
 $$
-y por lo tanto
-$$
-p(\mathbf{Y}\mid\theta) = \prod\theta^{y_{i,j}}(1-\theta)^{1-y_{i,j}} = \theta^{\sum y_{i,j}} (1-\theta)^{\sum(1- y_{i,j})}
-$$
-donde la productoria y las sumas se hacen sobre $\{i,j:i\neq j\}$ y $\{i,j:i<j\}$ para redes dirigidas y no dirigidas, respectivamente.
+p(\mathbf{Y} \mid \theta) = \prod \theta^{y_{i,j}}(1-\theta)^{1-y_{i,j}} = \theta^{\sum y_{i,j}} (1-\theta)^{\sum (1-y_{i,j})},
+$$  
+donde el producto y las sumas se toman sobre $\{i,j : i\neq j\}$ para redes dirigidas y $\{i,j : i<j\}$ para redes no dirigidas.  
 
-Este modelo se utiliza comúnmente como **punto de referencia** (*baseline*) para determinar si un grafo **satisface o no alguna propiedad** local o estructural. 
+Este modelo sirve como un **punto de referencia** (*baseline*) para analizar si un grafo **satisface ciertas propiedades** locales o estructurales.  
 
-## Propiedades
+### Propiedades del Modelo  
 
-- El grado de cada vértice tiene distribución Binomial con parámetros $n-1$ y $\theta$, donde $n=|V|$ es el orden del grafo.
-- Si $\theta = \frac{k}{n}$ con $k>0$, entonces la distribución del grado es aproximadamente Poisson con media $k$ cuando $n\rightarrow\infty$.
-- Distancias y transitividad bajas.
-- La distribución de $\mathbf{Y}\mid{\textstyle\sum} y_{i,j} = s,\theta$ es uniforme y no depende de $\theta$, i.e., el modelo asigna la misma probabilidad a todos los grafos con un número fijo de vértices $n$ y número fijo de aristas $s$:
-$$
-p(\mathbf{Y}\mid{\textstyle\sum} y_{i,j} = s,\theta) = \frac{p(\mathbf{Y},{\textstyle\sum y_{i,j}} = s\mid\theta)}{p({\textstyle\sum y_{i,j}} = s\mid\theta)} = \frac{1}{\binom{q}{s}}
-$$
-donde $q$ es el número de diadas sobre el cual se hace la sumatoria. Esta distribución se denomina comúnmente como **modelo de Erdös–Rényi**.
+1. **Distribución de grado**:  
+   - El grado de cada vértice sigue una distribución Binomial con parámetros $n-1$ y $\theta$, donde $n = |V|$ es el número de nodos del grafo.  
+   - Si $\theta = \frac{k}{n}$ con $k > 0$, la distribución del grado converge aproximadamente a una distribución Poisson con media $k$ cuando $n \to \infty$.  
+
+2. **Distancias y transitividad**:  
+   - El modelo típicamente produce grafos con **bajas distancias promedio** y **baja transitividad**.  
+
+3. **Distribución condicional uniforme**:  
+   - Para un número fijo de aristas $s$, la distribución de $\mathbf{Y} \mid {\textstyle \sum} y_{i,j} = s, \theta$ es uniforme y no depende de $\theta$. Esto implica que el modelo asigna la misma probabilidad a todos los grafos con $n$ nodos y $s$ aristas:  
+     $$
+     p(\mathbf{Y} \mid {\textstyle \sum} y_{i,j} = s, \theta) = \frac{p(\mathbf{Y}, {\textstyle \sum} y_{i,j} = s \mid \theta)}{p({\textstyle \sum} y_{i,j} = s \mid \theta)} = \frac{1}{\binom{q}{s}},
+     $$  
+     donde $q$ es el número de díadas en las que se define la sumatoria.  
+
+Este modelo, conocido comúnmente como **modelo de Erdős–Rényi**, es fundamental para entender las propiedades probabilísticas de los grafos aleatorios.  
 
 ## Ejemplo: Simulación
 
@@ -95,7 +102,7 @@ suppressMessages(suppressWarnings(library(igraph)))
 n <- 100
 k <- 2
 theta <- k/n
-# simulacion (ver tambien sample_gnm)
+# simulación (ver también sample_gnm)
 set.seed(42)
 g <- sample_gnp(n = n, p = theta, directed = F, loops = F)
 igraph_options(vertex.label = NA, edge.color = "gray40", vertex.color = 1, vertex.frame.color = 1, vertex.size = 6)
@@ -109,9 +116,9 @@ plot(g, layout = layout_with_fr, main = "Grafo aleatorio generado con n = 100 y 
 is_connected(g)
 # frecuencias de componentes
 table(sapply(X = decompose(g), FUN = vcount))
-# distribucion del grado
+# distribución del grado
 table(degree(g))/n
-# distribucion del grado aprox.
+# distribución del grado aprox.
 round(dpois(x = 0:6, lambda = k), 3)
 # grado promedio
 mean(degree(g))
@@ -119,7 +126,7 @@ mean(degree(g))
 (n-1)*theta
 # distancia promedio
 mean_distance(g)
-# coef. agrupamiento
+# coeficiente de agrupamiento
 transitivity(g)
 ```
 
@@ -137,7 +144,7 @@ theta <- k/n
 
 
 ```{r}
-# simulacion
+# simulación
 B  <- 1000
 dg <- NULL
 dp <- NULL
@@ -146,7 +153,7 @@ set.seed(42)
 for (b in 1:B) {
   # grafo
   g  <- sample_gnp(n = n, p = theta, directed = F, loops = F)
-  # estadisticos
+  # estadísticos
   dg <- rbind(dg, table(factor(x = degree(g), levels = 0:9))/n)
   dp[b] <- mean_distance(g)
   ca[b] <- transitivity(g)
@@ -180,55 +187,85 @@ legend("topright", legend = c("P 50", "IC 95"), col = c(2,4), lty = c(2,4), lwd 
 
 ## Estimación
 
-¿Cuál valor de $\theta\in\Theta$ que hace $\tilde{\mathbf{Y}}\sim p(\mathbf{Y}\mid\theta)$ sea lo más similar posible a $\mathbf{Y}$?
+¿Cuál es el valor de $\theta \in \Theta$ que hace que $\tilde{\mathbf{Y}} \sim p(\mathbf{Y} \mid \theta)$ sea lo más similar posible a $\mathbf{Y}$?  
 
-El **estimador de máxima verosimilitud** (*maximum likelihood estimator*, MLE) de $\theta$ es el valor $\hat{\theta}\in\Theta$ que maximiza la probabilidad de los datos observados:
-$$
-p(\mathbf{Y}\mid\hat{\theta})\geq p(\mathbf{Y}\mid\theta)\,\,\text{para todo }\theta\in\Theta\,.
-$$
-El MLE de $\theta$ es la densidad de $\mathbf{Y}$, i.e., $\hat{\theta} = \textsf{den}(\mathbf{Y})$, dado que la log-verosimilitud está dada por:
-$$
-\ell(\theta) = \log p(\mathbf{Y}\mid\theta) = \log\theta\textstyle\sum y_{i,j} + \log(1-\theta)\textstyle\sum (1-y_{i,j})\,.
-$$
+El **estimador de máxima verosimilitud** (*maximum likelihood estimator*, MLE) de $\theta$ es el valor $\hat{\theta} \in \Theta$ que maximiza la probabilidad de los datos observados. 
+
+Formalmente:  
+\[
+p(\mathbf{Y} \mid \hat{\theta}) \geq p(\mathbf{Y} \mid \theta) \quad \text{para todo } \theta \in \Theta.
+\]
+
+En este caso, el MLE de $\theta$ corresponde a la densidad de la matriz $\mathbf{Y}$, es decir,  
+\[
+\hat{\theta} = \textsf{den}(\mathbf{Y}),
+\]  
+donde $\textsf{den}(\mathbf{Y})$ es la proporción de entradas activas (aristas presentes) en $\mathbf{Y}$.
+
+La log-verosimilitud, que sirve como función objetivo para encontrar $\hat{\theta}$, está dada por:  
+\[
+\ell(\theta) = \log p(\mathbf{Y} \mid \theta) = \log \theta \textstyle\sum y_{i,j} + \log(1-\theta) \textstyle\sum (1-y_{i,j}),
+\]  
+donde las sumas recorren las entradas relevantes de $\mathbf{Y}$.  
 
 ## Bondad de ajuste
 
-Una **prueba de bondad de ajuste interna** es una comparación de los datos observados con el modelo de probabilidad propuesto.
+Una **prueba de bondad de ajuste interna** evalúa la concordancia entre los datos observados y el modelo probabilístico propuesto.
 
-**Ingredientes:**
+## Elementos clave
 
-- Un **estadístico de prueba** $t$ donde $t:\mathcal{Y}\rightarrow\mathbb{R}$ es una función de valor real conocida de los datos.
-- Una **distribución nula** $p(t\mid\textsf{M})$ donde $p(t\mid\textsf{M})$ es la distribución de probabilidad de $t$ bajo el modelo estadístico $\textsf{M}$.
-- Una **medida de discrepancia** asociada con la comparación de $t_{\text{obs}} = t(\mathbf{Y})$ con $p(t\mid\textsf{M})$. Esta medida se denominada **valor** $p$ y se calcula como $p = \textsf{Pr}(t > t_{\text{obs}}\mid\textsf{M})$. El valor $p$ se puede aproximar por medio de **métodos de Monte Carlo**. Valores $p$ que tienden a 0 o a 1 indican una alta discrepancia entre los datos observados y el modelo propuesto.
+- **Estadístico de prueba**:  
+  Una función real $t: \mathcal{Y} \to \mathbb{R}$ que resume características relevantes de los datos observados.
 
-Una característica se denomina **"significativa"** si resulta ser inusual o inesperada (valo $p$ extremo) respecto a modelo de grafos aleatorios (e.g., modelo de Erdös–Rényi).
+- **Distribución nula**:  
+  La distribución $p(t \mid \textsf{M})$, que describe el comportamiento esperado de $t$ bajo el modelo estadístico $\textsf{M}$.
 
-Procedimiento de evaluación del modelo:
+- **Medida de discrepancia**:  
+  Se utiliza el valor $p$, que mide la probabilidad de observar valores del estadístico de prueba mayores que el valor observado $t_{\text{obs}} = t(\mathbf{Y})$ bajo el modelo $\textsf{M}$:
+  $$
+  p = \textsf{Pr}(t > t_{\text{obs}} \mid \textsf{M}).
+  $$
+  Este valor $p$ puede aproximarse utilizando **métodos de Monte Carlo**. Valores extremos (cercanos a 0 o 1) indican una discrepancia significativa entre los datos y el modelo propuesto.
 
-1. Calcular $\hat{\theta}$ a partir del conjunto de datos observado $\mathbf{Y}$.
-2. Simular $\tilde{\mathbf{Y}}_1,\ldots,\tilde{\mathbf{Y}}_B$ a partir del modelo propuesto $p(\mathbf{Y}\mid\hat{\theta})$.
-3. Calcular $t_{\text{obs}} = t(\mathbf{Y})$ y $t(\tilde{\mathbf{Y}}_1),\ldots,t(\tilde{\mathbf{Y}}_B)$.
-4. Comparar $t_{\text{obs}}$ con la distribución empírica de $t(\tilde{\mathbf{Y}}_1),\ldots,t(\tilde{\mathbf{Y}}_B)$.
+Una característica se considera **significativa** si su valor $p$ es extremo, lo que sugiere que el modelo no explica bien dicha característica (por ejemplo, en modelos de grafos aleatorios como el de Erdős–Rényi).
 
-Estadísticos de prueba:
+## Procedimiento para Evaluar el Modelo
 
-- Densidad.
-- Transitividad.
-- Asortatividad.
-- Reciprocidad. 
-- Diámetro.
-- Fracción de vértices aislados, de articulación, o de la componente gigante.
-- Media, SD, o cualquier característica de una medida de centralidad.
-- Media, SD, o cualquier característica de la distancia geodésica.
-- **Cualquier función de los datos observados**.
+1. **Estimar parámetros**:  
+   Calcular $\hat{\theta}$ a partir de los datos observados $\mathbf{Y}$.
+
+2. **Simular datos**:  
+   Generar $B$ muestras simuladas $\tilde{\mathbf{Y}}_1, \ldots, \tilde{\mathbf{Y}}_B$ a partir del modelo $p(\mathbf{Y} \mid \hat{\theta})$.
+
+3. **Calcular el estadístico**:  
+   Evaluar el estadístico de prueba para los datos observados $t_{\text{obs}} = t(\mathbf{Y})$ y para las simulaciones $t(\tilde{\mathbf{Y}}_1), \ldots, t(\tilde{\mathbf{Y}}_B)$.
+
+4. **Comparar resultados**:  
+   Comparar $t_{\text{obs}}$ con la distribución empírica de $t(\tilde{\mathbf{Y}}_1), \ldots, t(\tilde{\mathbf{Y}}_B)$ para calcular el valor $p$.
+
+## Ejemplos de Estadísticos de Prueba
+
+- **Propiedades estructurales**:
+  - Densidad.
+  - Transitividad.
+  - Asortatividad.
+  - Reciprocidad.
+  - Diámetro.
+
+- **Características nodales y de la red**:
+  - Fracción de vértices aislados, de articulación o en la componente gigante.
+  - Media, desviación estándar (SD) u otras estadísticas relacionadas con medidas de centralidad.
+  - Media, SD o características de las distancias geodésicas.
+
+- **Funciones generales**:  
+  Cualquier función de los datos observados que capture propiedades relevantes.
+
 
 ## Ejemplo: Conflictos
 
-***Hoff, P. D. (2009). Multiplicative latent factor models for description and prediction of social networks. Computational and mathematical organization theory, 15(4), 261.***
+Los datos hacen corresponden a los **conflictos entre países durante la década de 1990**. La matriz $\mathbf{Y} = [y_{i,j}]$ representa las relaciones de conflicto entre pares de países, donde cada entrada $y_{i,j}$ indica el número de conflictos iniciados por el país $i$ hacia el país $j$.
 
-Datos de conflictos entre países en los años 90. 
-
-`Y` hace referencia a una matriz $\mathbf{Y}=[y_{i,j}]$ en la que $y_{i,j}$ representa el número de conflictos iniciados por el país $i$ hacia el país $j$.
+Hoff, P. D. (2009). Multiplicative latent factor models for description and prediction of social networks. *Computational and Mathematical Organization Theory, 15*(4), 261–272.
 
 ```{r}
 suppressMessages(suppressWarnings(library(igraph)))
@@ -249,19 +286,31 @@ is_directed(g)
 is_weighted(g)
 ```
 
-
 ```{r, fig.width=6, fig.height=6, fig.align='center'}
-# grafico
-col <- c(RColorBrewer::brewer.pal(9,"Set1")[1:9])
-igraph_options(vertex.label = NA, edge.color = "gray40", vertex.color = adjustcolor(col[1], 0.3), vertex.frame.color = col[1])
-set.seed(42)
-plot(g, layout = layout_with_kk, vertex.size = 3*sqrt(degree(g)), main = "Conflictos")
+# Cargar las bibliotecas necesarias
+suppressMessages(suppressWarnings(library(igraph)))
+suppressMessages(suppressWarnings(library(ggraph)))
+suppressMessages(suppressWarnings(library(tidygraph)))
+# Crear un grafo no dirigido
+g <- graph_from_adjacency_matrix(adjmatrix = Y, mode = "undirected")
+# Convertir a un formato compatible con ggraph/tidygraph
+g_tidy <- as_tbl_graph(g)
+# Calcular el grado de los nodos
+g_tidy <- g_tidy %>%
+  mutate(degree = centrality_degree()) 
+# Visualizar la red con ggraph
+set.seed(123)  
+ggraph(g_tidy, layout = "fr") +
+  geom_edge_link(aes(alpha = 0.5), color = "gray", width = 0.3) +
+  geom_node_point(aes(size = degree), color = "skyblue") +
+  theme_void() +
+  labs(title = "Red de conflictos entre países (1990s)") +
+  theme(legend.position = "none")
 ```
 
 
-
 ```{r, fig.width=12, fig.height=6, fig.align='center'}
-# estimacion de theta MLE
+# estimación de theta MLE
 theta_hat <- edge_density(g, loops = FALSE)
 theta_hat
 mean(Y[lower.tri(Y)])
@@ -273,7 +322,7 @@ n <- vcount(g)
 m <- n*(n-1)/2
 s <- m*edge_density(g, loops = FALSE)
 loglik <- function(theta) s*log(theta) + (m-s)*log(1-theta)
-# grafico
+# gráfico
 par(mfrow = c(1,2), mar = c(3,3,1,1), mgp = c(1.75,0.75,0))
 curve(expr = loglik(x), from = 0, to = 1, lwd = 2, xlab = expression(theta), ylab = "Log-verosimilitud")
 abline(v = theta_hat, col = 2, lty = 2)
@@ -294,7 +343,7 @@ for (i in 1:B) {
   g_rep <- sample_gnp(n = n, p = theta_hat, directed = F, loops = F)
   t_rep[i] <- transitivity(g_rep)
 }
-# grafico
+# gráfico
 hist(x = t_rep, freq = F, col = "gray90", border = "gray90", xlim = c(0,0.2), xlab = "Transitividad", ylab = "Densidad", main = "Conflictos")
 abline(v = t_obs, col = 4, lty = 2)
 # valor p
@@ -302,22 +351,59 @@ mean(t_rep > t_obs)
 ```
 
 
-# Validación cruzada
+# Validación Cruzada
 
-- Particionar el **conjunto de díadas** $D$ en $L$ grupos (*folds*) $C_1,\ldots,C_L$ de aproximadamente el mismo tamaño.
-- Para $\ell=1,\ldots,L$:
-    1. Establecer las **díadas de entrenamiento** (*traning data*), $D-\cup_{k\neq\ell} C_k$.
-    2. Establecer las **díadas de prueba** (*test data*), $C_\ell$.
-    3. Ajustar el modelo usando las díadas de entrenamiento.
-    4. Calcular las probabilidades interacción para las díadas de prueba.
-    5. Comparar las probabilidades interacción con los valores observados de las díadas de prueba.
+La **validación cruzada** consiste en evaluar un modelo particionando el conjunto de díadas $D$ en grupos para medir su capacidad predictiva. 
+
+El procedimiento es el siguiente:
+
+1. Dividir el **conjunto de díadas** $D$ en $L$ grupos (*folds*) $C_1, \ldots, C_L$, procurando que los grupos sean de tamaño similar.
+2. Para cada grupo $\ell = 1, \ldots, L$:
+   - **Definir díadas de entrenamiento**: Utilizar como datos de entrenamiento las díadas en $D - C_\ell$, es decir, todas las díadas excepto las del grupo de prueba actual.
+   - **Definir díadas de prueba**: Usar las díadas en $C_\ell$ como datos de prueba.
+   - **Ajustar el modelo**: Entrenar el modelo utilizando únicamente las díadas de entrenamiento.
+   - **Calcular probabilidades de interacción**: Generar las probabilidades de interacción para las díadas de prueba con el modelo ajustado.
+   - **Evaluar el modelo**: Comparar las probabilidades de interacción predichas con los valores observados de las díadas de prueba.
 
 
 ```{r, eval = TRUE, echo=FALSE, out.width="85%", fig.pos = 'H', fig.align = 'center'}
 knitr::include_graphics("modelos_cv.jpg")
 ```
 
+
 ## Matriz de confusión
+
+La **matriz de confusión** es una herramienta clave para evaluar modelos de clasificación, comparando las categorías reales (positivas o negativas) con las predicciones del modelo. Los valores principales son:
+
+- **Verdaderos Positivos (TP):** Casos positivos correctamente identificados por el modelo.  
+- **Verdaderos Negativos (TN):** Casos negativos correctamente identificados por el modelo.  
+- **Falsos Positivos (FP):** Casos negativos que el modelo predijo como positivos (errores tipo I).  
+- **Falsos Negativos (FN):** Casos positivos que el modelo predijo como negativos (errores tipo II).  
+
+A partir de estos valores, se calculan métricas clave como:
+
+- **Sensibilidad** (recall): mide la capacidad de identificar correctamente los positivos:
+  \[
+  \text{Sensibilidad} = \frac{\text{TP}}{\text{TP} + \text{FN}}
+  \]
+
+- **Especificidad**: mide la capacidad de identificar correctamente los negativos:
+  \[
+  \text{Especificidad} = \frac{\text{TN}}{\text{TN} + \text{FP}}
+  \]
+
+- **Precisión**: mide la proporción de predicciones positivas que son correctas:
+  \[
+  \text{Precisión} = \frac{\text{TP}}{\text{TP} + \text{FP}}
+  \]
+
+- **Exactitud**: mide la proporción total de predicciones correctas:
+  \[
+  \text{Exactitud} = \frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}}
+  \]
+
+Estas métricas ofrecen una evaluación integral del desempeño del modelo, permitiendo identificar fortalezas y áreas de mejora.
+
 
 ```{r, eval = TRUE, echo=FALSE, out.width="85%", fig.pos = 'H', fig.align = 'center'}
 knitr::include_graphics("modelos_matriz_confusion.jpeg")
@@ -326,7 +412,9 @@ knitr::include_graphics("modelos_matriz_confusion.jpeg")
 
 ## Curva ROC
 
-Una **curva característica operativa del receptor** (*Receiver Operating Characteristic (ROC) curve*) es una representación de la **Tasa de Verdaderos Positivos (Sensibilidad) frente a la Tasa de Falsos Positivos (1 - Especificidad)** para un **clasificador binario** según se **varía el umbral de discriminación**.
+Una **curva ROC** (*Receiver Operating Characteristic curve*) es una representación gráfica que muestra la relación entre la **Tasa de Verdaderos Positivos (Sensibilidad)** y la **Tasa de Falsos Positivos (1 - Especificidad)** para un **clasificador binario**, al modificar el **umbral de decisión**. 
+
+Esta curva permite evaluar el desempeño del modelo a través de diferentes niveles de tolerancia a errores, ayudando a identificar el balance óptimo entre sensibilidad y especificidad.
 
 
 ```{r, eval = TRUE, echo=FALSE, out.width="85%", fig.pos = 'H', fig.align = 'center'}
@@ -352,24 +440,21 @@ g <- graph_from_adjacency_matrix(adjmatrix = Y, mode = "undirected")
 
 ```{r, fig.width=6, fig.height=6, fig.align='center'}
 # orden
-n <- vcount(g)
-n
+(n <- vcount(g))
 # numero de diadas
-M <- n*(n-1)/2
-M
+(M <- n*(n-1)/2)
 # numero de folds
-L <- 10
-# conformacion de folds
+(L <- 10)
+# conformación de folds
 set.seed(42)
 fold_index_vec <- sample(x = 1:L, size = M, replace = T)
 fold_index_mat <- matrix(data = 0, nrow = n, ncol = n)
 fold_index_mat[lower.tri(fold_index_mat)] <- fold_index_vec
-# distribucion de folds
-tab <- table(fold_index_vec)
-tab
+# distribución de folds
+(tab <- table(fold_index_vec))
 # viz de folds a traves de la matriz de adyacencia
 corrplot::corrplot(corr = fold_index_mat/L, col.lim = c(0,1), method = "color", tl.pos = "n", cl.pos = "n")
-# distribucion de enlaces por fold
+# distribución de enlaces por fold
 y <- Y[lower.tri(Y)]
 tmp <- NULL
 for (l in 1:L)
@@ -382,7 +467,7 @@ round(tmp, 3)
 
 
 ```{r}
-# validacion cruzada
+# validación cruzada
 IP <- vector(mode = "list", L)
 B <- 1000
 set.seed(123)
@@ -425,6 +510,13 @@ for (l in 1:L) {
 
 ### Áreas bajo la curva ROC {-}
 
+El **AUC** (*Area Under the Curve*) en una curva **ROC** mide el desempeño general de un clasificador binario como el área bajo la curva que relaciona la **Tasa de Verdaderos Positivos (Sensibilidad)** y la **Tasa de Falsos Positivos (1 - Especificidad)** para diferentes umbrales de decisión. 
+
+- **Rango:** Entre 0 y 1.  
+  - **AUC = 1:** Modelo perfecto.  
+  - **AUC = 0.5:** Modelo sin capacidad discriminativa (equivalente a azar).  
+
+El AUC permite comparar clasificadores y evaluar su capacidad para distinguir entre clases, incluso en datos desbalanceados. Cuanto más cercano a 1, mejor el rendimiento.
 
 ```{r}
 # AUCs
@@ -435,9 +527,8 @@ round(mean(aucs), 4)
 round(sd(aucs)/mean(aucs), 2)
 ```
 
-
 # Referencias
 
 ```{r, eval = TRUE, echo=FALSE, out.width="25%", fig.pos = 'H', fig.align = 'center'}
-knitr::include_graphics("KCbookcover1.jpg")
+knitr::include_graphics("01_cover_KC.jpg")
 ```
