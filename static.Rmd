@@ -1,0 +1,1264 @@
+---
+title: "Modelo de Sociabilidad"
+author: "J. Sosa"
+date: "2024-12-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Modelo
+
+Considere una **red binaria no dirigida** representada mediante la matriz de adyacencia \(\mathbf{Y} = [y_{i,j}]\), donde cada elemento \(y_{i,j} \in \{0,1\}\) indica la presencia (\(y_{i,j} = 1\)) o ausencia (\(y_{i,j} = 0\)) de una conexión entre los \(n\) individuos que conforman la red.
+
+El modelo para la probabilidad de conexión entre dos nodos se define como:  
+\[
+y_{i,j} \mid \theta_{i,j} \overset{\text{ind}}{\sim} \textsf{Ber}(\theta_{i,j}), \quad \text{para } i < j,
+\]  
+con:  
+\[
+\theta_{i,j} = \Phi(\mu + \delta_i + \delta_j),
+\]  
+donde \(\Phi(\cdot)\) denota la función de distribución acumulada de una **Normal estándar**. Esta función se utilizada como **función de enlace** para garantizar que las **probabilidades** \(\theta_{i,j,k}\) permanezcan dentro del intervalo \((0, 1)\).    
+
+Para los **parámetros**, se asumen las siguientes distribuciones previas:  
+\[
+\mu \sim \textsf{N}(0, \sigma^2), \quad \delta_i \overset{\text{iid}}{\sim} \textsf{N}(0, \tau^2), \quad \sigma^2 \sim \textsf{GI}(a_\sigma, b_\sigma), \quad \tau^2 \sim \textsf{GI}(a_\tau, b_\tau).
+\]  
+
+El **conjunto de parámetros** del modelo es:  
+\[
+\Theta = \{\mu, \delta_1, \delta_2, \dots, \delta_n, \sigma^2, \tau^2\},
+\]
+donde:
+
+- **\(\mu\):** Representa el **efecto promedio global de conectividad** en la red; valores altos indican una mayor **tendencia general** a formar conexiones.  
+- **\(\delta_i\) (\(i = 1, \dots, n\)):** Captura la **sociabilidad** del nodo \(i\); valores positivos indican una mayor **propensión individual** a conectarse, mientras que valores negativos reflejan una **menor tendencia**.  
+- **\(\sigma^2\):** Varianza de \(\mu\), mide la **incertidumbre** en el **efecto global de conectividad**.  
+- **\(\tau^2\):** Varianza de \(\delta_i\), refleja la **heterogeneidad** en las **tendencias de conexión** entre nodos.  
+
+Los \(\delta_i\) capturan diferencias individuales en conectividad, permitiendo modelar patrones de **centralidad** y **aislamiento** en la red.
+
+En total, el modelo tiene \(n + 3\) parámetros: \(n\) efectos de sociabilidad, más \(\mu\), \(\sigma^2\), y \(\tau^2\).
+
+Los **hiperparámetros** del modelo son:  
+\[
+\{a_\sigma, b_\sigma, a_\tau, b_\tau\},
+\]  
+donde \(a_\sigma, b_\sigma\) controlan la varianza de \(\mu\), y \(a_\tau, b_\tau\) regulan la variabilidad de \(\delta_i\).
+
+# Estimación
+
+En el modelo propuesto, **las distribuciones condicionales completas no tienen forma cerrada** debido a que la **función de enlace** introduce una relación **no lineal** entre los parámetros y las observaciones.
+
+#### Uso de variables latentes auxiliares {-}
+
+Para abordar esta limitación, se puede introducir **variables auxiliares latentes** \(z_{i,j}\), tales que:  
+\[
+y_{i,j} = 
+\begin{cases} 
+1 & \text{si } z_{i,j} > 0, \\
+0 & \text{si } z_{i,j} \leq 0,
+\end{cases}
+\]
+donde:
+\[
+z_{i,j} \mid \mu, \delta_i, \delta_j \sim \textsf{N}(\mu + \delta_i + \delta_j, 1).
+\]
+
+La introducción de las variables latentes \(z_{i,j}\) mantiene el modelo original porque estas variables son consistentes con la probabilidad subyacente del modelo inicial. Al integrar \(z_{i,j}\) sobre su distribución condicional, recuperamos la probabilidad original de \(y_{i,j}\):
+
+1. Dado que \(z_{i,j} \mid \mu, \delta_i, \delta_j \sim \textsf{N}(\mu + \delta_i + \delta_j, 1)\), la probabilidad de que \(y_{i,j} = 1\) es equivalente a la probabilidad de que \(z_{i,j} > 0\):  
+   \[
+   \textsf{P}(y_{i,j} = 1 \mid \mu, \delta_i, \delta_j) = \textsf{P}(z_{i,j} > 0) = \int_0^\infty \textsf{N}(z_{i,j} \mid \mu + \delta_i + \delta_j, 1) \, \textsf{d}z_{i,j}.
+   \]
+
+2. Evaluando esta integral, obtenemos:
+   \[
+   \textsf{P}(y_{i,j} = 1 \mid \mu, \delta_i, \delta_j) = \Phi(\mu + \delta_i + \delta_j),
+   \]
+   donde \(\Phi(\cdot)\) es la función de distribución acumulada de una normal estándar.
+
+3. De manera similar:
+   \[
+   \textsf{P}(y_{i,j} = 0 \mid \mu, \delta_i, \delta_j) = 1 - \Phi(\mu + \delta_i + \delta_j).
+   \]
+ 
+Este enfoque **linealiza el modelo** al sustituir la **función de enlace** \(\Phi(\cdot)\) por **variables auxiliares** \(z_{i,j,k}\) con **distribución Normal estándar**. Esta reformulación simplifica el cálculo de las distribuciones condicionales completas, permitiendo que adopten formas estándar.  
+
+#### Distribuciones Condicionales Completas {-}
+
+1. \( z_{i,j} \mid y_{i,j}, \mu, \delta_i, \delta_j \) es Normal truncada:
+\[
+z_{i,j} \mid y_{i,j}, \mu, \delta_i, \delta_j \sim
+\begin{cases} 
+\textsf{N}_{(0,\infty)}\,\,\, (\mu + \delta_i + \delta_j, 1), & \text{ si } y_{i,j} = 1, \\
+\textsf{N}_{(-\infty,0]}(\mu + \delta_i + \delta_j, 1), & \text{ si } y_{i,j} = 0.
+\end{cases}
+\]
+
+2. \( \mu \mid \mathbf{z}, \boldsymbol{\delta}, \sigma^2 \sim \textsf{N}(m, v^2) \), con:
+\[
+v^2 = \left(\frac{1}{\sigma^2} + \sum_{i<j} 1\right)^{-1}, \quad m = v^2 \sum_{i<j} (z_{i,j} - \delta_i - \delta_j).
+\]
+
+3. \( \delta_i \mid \mathbf{z}, \mu, \tau^2 \sim \textsf{N}(m_i, v_i^2) \), con:  
+\[
+v_i^2 = \left(\frac{1}{\tau^2} + \sum_{j \neq i} 1\right)^{-1}, \quad m_i = v_i^2 \sum_{j \neq i} (z_{i,j} - \mu - \delta_j).
+\]
+
+4. \( \sigma^2 \mid \mu \sim \textsf{GI}(a, b) \), con:  
+\[
+a = a_\sigma + \frac{1}{2}, \quad b = b_\sigma + \frac{\mu^2}{2}.
+\]
+
+5. \( \tau^2 \mid \boldsymbol{\delta} \sim \textsf{GI}(a, b) \), con:  
+\[
+a = a_\tau + \frac{n}{2}, \quad b_\tau^* = b_\tau + \frac{\sum_{i} \delta_i^2}{2}.
+\]  
+
+
+```{r}
+# Distribuciones condicionales completas
+# DCC 1: Muestreo de z
+sample_z <- function(y, mu, delta, z) {
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      mean_z <- mu + delta[i] + delta[j]
+      if (y[i, j] == 1) {
+        z[i, j] <- truncnorm::rtruncnorm(n = 1, a = 0, b = Inf, mean = mean_z, sd = 1)
+      } else {
+        z[i, j] <- truncnorm::rtruncnorm(n = 1, a = -Inf, b = 0, mean = mean_z, sd = 1)
+      }
+      z[j, i] <- z[i, j]  # Simetría
+    }
+  }
+  return(z)
+}
+
+# DCC 2: Muestreo de mu
+sample_mu <- function(z, delta, sigma2) {
+  v2_mu <- 1 / (1 / sigma2 + sum(upper.tri(z)))
+  m_mu <- v2_mu * sum(z[upper.tri(z)] - delta[row(z)[upper.tri(z)]] - delta[col(z)[upper.tri(z)]])
+  return(rnorm(1, mean = m_mu, sd = sqrt(v2_mu)))
+}
+
+# DCC 3: Muestreo de delta
+sample_delta <- function(z, mu, tau2, delta) {
+  for (i in 1:n) {
+    neighbors <- setdiff(1:n, i)
+    v2_delta <- 1 / (1 / tau2 + length(neighbors))
+    m_delta <- v2_delta * sum(z[i, neighbors] - mu - delta[neighbors])
+    delta[i] <- rnorm(1, mean = m_delta, sd = sqrt(v2_delta))
+  }
+  return(delta)
+}
+
+# DCC 4: Muestreo de sigma^2
+sample_sigma2 <- function(mu) {
+  a_sigma_post <- a_sigma + 0.5
+  b_sigma_post <- b_sigma + 0.5 * mu^2
+  return(1 / rgamma(1, shape = a_sigma_post, rate = b_sigma_post))
+}
+
+# DCC 5: Muestreo de tau^2
+sample_tau2 <- function(delta) {
+  a_tau_post <- a_tau + n / 2
+  b_tau_post <- b_tau + 0.5 * sum(delta^2)
+  return(1 / rgamma(1, shape = a_tau_post, rate = b_tau_post))
+}
+```
+
+
+```{r}
+# Muestreador de Gibbs
+gibbs_sampler <- function(y, n_iter, n_burn, n_thin) {
+  # Inicialización
+  mu <- 0
+  delta <- rnorm(n, 0, 1)
+  sigma2 <- 1
+  tau2 <- 1
+  z <- matrix(0, n, n)  # Variables auxiliares
+  # Almacenamiento
+  n_samples <- (n_iter - n_burn) / n_thin
+  samples <- list(mu = numeric(n_samples), 
+                  delta = matrix(0, nrow = n_samples, ncol = n), 
+                  sigma2 = numeric(n_samples), 
+                  tau2 = numeric(n_samples))
+  # Muestreo
+  cat("Iniciando muestreador de Gibbs...\n")
+  for (t in 1:n_iter) {
+    # Llamar a las funciones de muestreo
+    z <- sample_z(y, mu, delta, z)
+    mu <- sample_mu(z, delta, sigma2)
+    delta <- sample_delta(z, mu, tau2, delta)
+    sigma2 <- sample_sigma2(mu)
+    tau2 <- sample_tau2(delta)
+    # Almacenar muestras según n_thin
+    if (t > n_burn && (t - n_burn) %% n_thin == 0) {
+      idx <- (t - n_burn) / n_thin
+      samples$mu[idx] <- mu
+      samples$delta[idx, ] <- delta
+      samples$sigma2[idx] <- sigma2
+      samples$tau2[idx] <- tau2
+    }
+    # Mostrar progreso
+    if (t %% (n_iter / 10) == 0) {
+      cat(sprintf("Progreso: %d%% completado\n", (t / n_iter) * 100))
+    }
+  }
+  cat("Muestreador completado.\n")
+  return(samples)
+}
+```
+
+
+#### Hiperparámetros {-}
+
+Se recomienda \(\mathbb{E}[\sigma^2] \leq \mathbb{E}[\tau^2]\) para que la heterogeneidad individual \(\delta_i\) sea mayor que la incertidumbre global \(\mu\).
+
+\(a_\sigma = 2, b_\sigma = 1\).  
+
+- Valor esperado: \(\textsf{E}[\sigma^2] = \frac{b_\sigma}{a_\sigma - 1} =  1\).  
+- Coeficiente de variación: \(\textsf{CV}[\sigma^2] = \sqrt{\frac{1}{a_\sigma - 2}} = \infty\).  
+
+\(a_\sigma = 1, b_\sigma = 1\).  
+
+- Valor esperado* \(\textsf{E}[\sigma^2] = \frac{b_\sigma}{a_\sigma - 1} = \infty\).  
+- Coeficiente de variación: No definido (alta dispersión y cola pesada).  
+
+\(a_\tau = 3, b_\tau = 2\).  
+
+- Valor esperado: \(\textsf{E}[\tau^2] = \frac{b_\tau}{a_\tau - 1} = 1\).  
+- Coeficiente de variación: \(\textsf{CV}[\tau^2] = \sqrt{\frac{1}{a_\tau - 2}} = \sqrt{\frac{1}{1}} = 1\).  
+
+\(a_\tau = 2, b_\tau = 1\).  
+
+- Valor esperado: \(\mathbb{E}[\tau^2] = \frac{b_\tau}{a_\tau - 1} = 1\).  
+- Coeficiente de variación: \(\textsf{CV}[\tau^2] = \sqrt{\frac{1}{a_\tau - 2}} = \infty\).  
+
+# Ejemplo: Simulación
+
+#### Generación de datos {-}
+
+```{r sim data}
+# Simulación de datos según el modelo
+simulate_data <- function(n, mu_true, tau2_true) {
+  # Generar parámetros verdaderos
+  delta_true <- rnorm(n, mean = 0, sd = sqrt(tau2_true))  # Efectos nodales
+  z_true <- matrix(0, n, n)  # Variables latentes
+  Y <- matrix(0, n, n)  # Matriz de adyacencia
+  # Generar la matriz de adyacencia
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      z_true[i, j] <- rnorm(1, mean = mu_true + delta_true[i] + delta_true[j], sd = 1)
+      z_true[j, i] <- z_true[i, j]  # Simetría
+      Y[i, j] <- ifelse(z_true[i, j] > 0, 1, 0)
+      Y[j, i] <- Y[i, j]  # Simetría
+    }
+  }
+  # Retornar los datos simulados
+  list(Y = Y, z_true = z_true, delta_true = delta_true, mu_true = mu_true, tau2_true = tau2_true)
+}
+```
+
+
+```{r sim data 2}
+# Parámetros verdaderos
+n <- 50
+mu_true <- -0.5
+tau2_true <- 0.5
+# Simulación
+set.seed(123)
+sim_data <- simulate_data(n, mu_true, tau2_true)
+# Matriz de adyacencia simulada
+Y <- sim_data$Y
+```
+
+
+```{r viz data, echo=F, fig.height = 6, fig.width = 12, fig.align='center'}
+# Librerías
+suppressWarnings(suppressMessages(library(igraph)))
+suppressWarnings(suppressMessages(library(ggraph)))
+suppressWarnings(suppressMessages(library(tidygraph)))
+suppressWarnings(suppressMessages(library(gridExtra)))
+
+# Convertir matriz de adyacencia a grafo
+graph <- graph_from_adjacency_matrix(Y, mode = "undirected", diag = FALSE)
+
+# Añadir nombres a los nodos (aunque no se usarán en el gráfico)
+V(graph)$name <- 1:vcount(graph)
+
+# Convertir a tbl_graph para ggraph
+graph_tbl <- as_tbl_graph(graph)
+
+# Layout Circular
+plot_circular <- ggraph(graph_tbl, layout = "circle") +
+  geom_edge_link(aes(edge_alpha = 0.8), color = "gray70", show.legend = FALSE) +
+  geom_node_point(size = 3, color = "darkblue", shape = 21, fill = "lightblue") +
+  theme_void() +
+  theme(
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold")
+  ) +
+  ggtitle("")
+
+
+# Layout Fruchterman-Reingold
+plot_fr <- ggraph(graph_tbl, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = 0.8), color = "gray70", show.legend = FALSE) +
+  geom_node_point(size = 3, color = "darkblue", shape = 21, fill = "lightblue") +
+  theme_void() +
+  theme(
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold")
+  ) +
+  ggtitle("")
+
+# Mostrar ambos plots lado a lado
+grid.arrange(plot_circular, plot_fr, ncol = 2)
+```
+
+#### Ajuste del modelo {-}
+
+
+```{r hyperpars sim}
+# Hiperparámetros
+a_sigma <- 2 
+b_sigma <- 1
+a_tau   <- 2 
+b_tau   <- 1
+```
+
+
+```{r model fitting sim, echo=T, eval=F}
+# Ajustar el modelo usando Gibbs
+n_iter <- 100000 + 10000
+n_burn <- 10000
+n_thin <- 5
+set.seed(123)
+samples <- gibbs_sampler(Y, n_iter, n_burn, n_thin)
+save(samples, file = "samples_regresion_binaria_sinteticos.RData")
+```
+
+
+```{r load samples sim, echo=F, eval=T}
+load("samples_regresion_binaria_sinteticos.RData")
+```
+
+
+#### Convergencia {-}
+
+
+Para cada muestra de \(\mu\) y \(\boldsymbol{\delta}\), la log-verosimilitud del modelo se calcula como:  
+\[
+\log p(\mu, \boldsymbol{\delta} \mid \mathbf{y}) = \sum_{i < j} \left[ y_{i,j} \log(\theta_{i,j}) + (1 - y_{i,j}) \log(1 - \theta_{i,j}) \right],
+\]
+donde $\theta_{i,j} = \Phi(\mu + \delta_i + \delta_j)$.
+
+
+```{r loklik func}
+# Función para calcular la log-verosimilitud
+log_likelihood <- function(y, samples) {
+  n <- nrow(y)  # Número de nodos
+  log_lik_samples <- numeric(length(samples$mu))  # Almacenar la log-verosimilitud para cada muestra
+  for (s in seq_along(samples$mu)) {
+    mu <- samples$mu[s]
+    delta <- samples$delta[s, ]
+    log_lik <- 0
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        eta_ij <- mu + delta[i] + delta[j]  # Predictor lineal
+        p_ij <- pnorm(eta_ij)  # Probabilidad del modelo (probit)
+        # Sumar la contribución del par (i, j) a la log-verosimilitud
+        log_lik <- log_lik + y[i, j] * log(p_ij + 1e-10) + (1 - y[i, j]) * log(1 - p_ij + 1e-10)
+      }
+    }
+    log_lik_samples[s] <- log_lik
+  }
+  return(log_lik_samples)
+}
+```
+
+
+```{r compute loglik}
+# Calcular la log-verosimilitud para las muestras del muestreador
+log_lik <- log_likelihood(Y, samples)
+```
+
+
+```{r viz loglik, echo=F, fig.align='center'}
+# Crear un data frame para el gráfico
+log_lik_df <- data.frame(
+  Iteration = seq_along(log_lik),  # Número de iteración
+  LogLikelihood = log_lik          # Valores de la log-verosimilitud
+)
+# Graficar la log-verosimilitud frente a las iteraciones (solo puntos pequeños)
+suppressMessages(suppressWarnings(library(ggplot2)))
+ggplot(log_lik_df, aes(x = Iteration, y = LogLikelihood)) +
+  geom_point(size = 0.5, color = 4, alpha = 0.5) +  # Puntos pequeños y semitransparentes
+  theme_minimal() +  # Tema limpio
+  labs(
+    title = "Log-Verosimilitud",
+    x = "Iteración",
+    y = "Log-Verosimilitud"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)
+  )
+```
+
+
+```{r convergence sim}
+# Cargar librerías necesarias
+suppressMessages(suppressWarnings(library(coda)))
+
+# Función para calcular MCSE
+mc_ee <- function(samples) {
+  n_eff <- effectiveSize(samples)          # Tamaño efectivo
+  sd_est <- sd(as.vector(samples))         # Desviación estándar
+  mcse <- abs(sd_est / sqrt(n_eff))        # Error estándar de Monte Carlo (MCSE)
+  return(mcse)
+}
+
+round(mc_ee(samples$mu), 4)
+round(mc_ee(samples$sigma2), 4)
+round(summary(mc_ee(samples$delta)), 4)
+```
+
+**Comparación Relativa con la Desviación Estándar:**  
+
+El **MCSE** se considera **pequeño** si es menor o igual al **5%** de la desviación estándar posterior (\( \hat{\sigma} \)):  
+\[
+\frac{\text{MCSE}}{\hat{\sigma}} \leq 0.05 \quad (5\%).
+\]  
+
+
+**Comparación con la Media Estimada:**
+
+El **MCSE** se considera **pequeño** si es menor o igual al **1%** de la **media estimada (\( \hat{\theta} \))**:  
+\[
+\frac{\text{MCSE}}{|\hat{\theta}|} \leq 0.15 \quad (15\%).
+\]  
+
+
+**Evaluación Basada en el Tamaño Efectivo de Muestras (\( n_{\text{eff}} \)):**
+
+** El **MCSE** es inversamente proporcional al **tamaño efectivo de muestra (\( n_{\text{eff}} \))**:  
+\[
+\text{MCSE} \propto \frac{1}{\sqrt{n_{\text{eff}}}}.
+\]  
+**Criterio:**
+  - **\( n_{\text{eff}} > 1000 \):** MCSE pequeño (alta precisión).  
+  - **\( n_{\text{eff}} < 200 \):** MCSE grande (baja precisión).  
+
+
+#### Inferencia {-}
+
+
+```{r}
+# inferencia sobre mu, sigma2 y tau2
+# mu_true = -0.5
+# tau2_true = 0.5
+round(quantile(samples$mu,     probs = c(0.025,0.5,0.975)), 3)
+round(quantile(samples$tau2,   probs = c(0.025,0.5,0.975)), 3)
+```
+
+
+```{r viz delta sim, fig.align='center'}
+# Valores reales
+delta_true <- sim_data$delta_true
+# Crear un DataFrame con las estimaciones y los valores reales
+delta_mean <- colMeans(samples$delta)  # Media posterior de delta
+delta_ci95 <- apply(samples$delta, 2, quantile, probs = c(0.025, 0.975))  # IC al 95%
+delta_ci99 <- apply(samples$delta, 2, quantile, probs = c(0.005, 0.995))  # IC al 99%
+delta_df <- data.frame(
+  Node = 1:n,
+  Delta_Est = delta_mean,
+  Delta_True = delta_true,
+  CI95_Lower = delta_ci95[1, ],
+  CI95_Upper = delta_ci95[2, ],
+  CI99_Lower = delta_ci99[1, ],
+  CI99_Upper = delta_ci99[2, ]
+)
+# Graficar usando ggplot2
+ggplot(delta_df, aes(x = Node)) +
+  # IC al 99%
+  geom_linerange(aes(ymin = CI99_Lower, ymax = CI99_Upper), color = "gray70", linewidth = 1) +
+  # IC al 95%
+  geom_linerange(aes(ymin = CI95_Lower, ymax = CI95_Upper), color = "lightblue", linewidth = 1.5) +
+  # Estimaciones puntuales
+  geom_point(aes(y = Delta_Est), color = "blue", size = 3) +
+  # Valores reales
+  geom_point(aes(y = Delta_True), color = "red", shape = 4, size = 3) +
+  # Personalización
+  labs(
+    title = "Estimaciones de Delta con Intervalos de Credibilidad",
+    x = "Vértice",
+    y = expression(delta)
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+```
+
+
+# Ejemplo: Trabajo colaborativo
+
+Los **datos de Lazega** corresponden a una **red de relaciones de trabajo colaborativo** entre miembros de una **firma de abogados**. 
+
+Estos datos se recopilaron para estudiar la **cooperación** entre **actores sociales** dentro de una **organización**, analizando el **intercambio** de diversos tipos de **recursos** entre ellos.
+
+
+```{r data lazega}
+# librerías
+suppressMessages(suppressWarnings(library(igraph)))
+suppressMessages(suppressWarnings(library(ggraph)))
+suppressMessages(suppressWarnings(library(sand)))
+# grafo
+g <- graph_from_data_frame(d = elist.lazega, directed = "F")
+# clase de objeto
+class(g)
+# dirigida?
+is_directed(g)
+# ponderada?
+is_weighted(g)
+# orden
+(n <- vcount(g))
+# tamaño
+(s <- ecount(g))
+```
+
+
+```{r data lazega 2}
+# matriz de adyacencia
+Y <- as.matrix(as_adjacency_matrix(graph = g, names = F))
+# clase de objeto
+class(Y)
+# dimensión
+dim(Y)
+# simétrica?
+isSymmetric(Y)
+```
+
+
+```{r viz lazega, echo=F, fig.height = 6, fig.width = 12, fig.align='center'}
+# visualización
+igraph_options(vertex.label = 1:vcount(g), vertex.size = 9, vertex.frame.color = 1, vertex.color = 0, vertex.label.color = "black", edge.color = "blue4")
+par(mfrow = c(1,2))
+# diseño circular
+plot(g, layout = layout_in_circle)
+# diseño de Fruchterman y Reingold: Graph Drawing by Force-directed Placement
+set.seed(1234)
+plot(g, layout = layout_with_fr)
+```
+
+
+#### Ajuste del modelo
+
+
+```{r hyperpars lazega}
+# Hiperparámetros
+a_sigma <- 2 
+b_sigma <- 1
+a_tau   <- 2 
+b_tau   <- 1
+```
+
+
+```{r model fitting lazega, echo=T, eval=F}
+# Ajustar el modelo usando Gibbs
+n_iter <- 100000 + 10000
+n_burn <- 10000
+n_thin <- 5
+samples <- gibbs_sampler(Y, n_iter, n_burn, n_thin)
+save(samples, file = "samples_regresion_binaria_lazega.RData")
+```
+
+
+```{r samples load lazega, echo=F, eval=T}
+load("samples_regresion_binaria_lazega.RData")
+```
+
+
+```{r convergence lazega}
+# Cargar librerías necesarias
+suppressMessages(suppressWarnings(library(coda)))
+
+# Función para calcular MCSE
+mc_ee <- function(samples) {
+  n_eff <- effectiveSize(samples)          # Tamaño efectivo
+  sd_est <- sd(as.vector(samples))         # Desviación estándar
+  mcse <- abs(sd_est / sqrt(n_eff))        # Error estándar de Monte Carlo (MCSE)
+  return(mcse)
+}
+
+round(mc_ee(samples$mu), 4)
+round(mc_ee(samples$sigma2), 4)
+round(summary(mc_ee(samples$delta)), 4)
+```
+
+
+#### Inferencia {-}
+
+
+```{r inference delta lazega, echo=F, fig.align='center'}
+# Crear el DataFrame con estimaciones
+delta_mean <- colMeans(samples$delta)  # Media posterior de delta
+delta_ci95 <- apply(samples$delta, 2, quantile, probs = c(0.025, 0.975))  # IC al 95%
+
+# Crear el DataFrame ordenado por la media posterior
+delta_df <- data.frame(
+  Node = 1:n,  # Nodo original
+  Delta_Est = delta_mean,
+  CI95_Lower = delta_ci95[1, ],
+  CI95_Upper = delta_ci95[2, ]
+)
+
+# Ordenar por la media posterior (Delta_Est)
+delta_df <- delta_df[order(delta_df$Delta_Est), ]
+delta_df$Order <- 1:n  # Nueva posición ordenada
+
+# Identificar intervalos que contienen 0
+delta_df$ContainsZero <- (delta_df$CI95_Lower <= 0 & delta_df$CI95_Upper >= 0)
+
+# Graficar usando ggplot2
+ggplot(delta_df, aes(x = Order)) +
+  # Intervalos de credibilidad al 95% (líneas más delgadas)
+  geom_segment(aes(
+    x = Order, xend = Order,
+    y = CI95_Lower, yend = CI95_Upper,
+    color = ContainsZero
+  ), linewidth = 0.8) + # Línea delgada
+  
+  # Líneas horizontales pequeñas en los extremos
+  geom_segment(aes(
+    x = Order - 0.2, xend = Order + 0.2, y = CI95_Lower, yend = CI95_Lower, 
+    color = ContainsZero
+  ), linewidth = 0.8) + # Extremo inferior
+
+  geom_segment(aes(
+    x = Order - 0.2, xend = Order + 0.2, y = CI95_Upper, yend = CI95_Upper, 
+    color = ContainsZero
+  ), linewidth = 0.8) + # Extremo superior
+
+  # Estimaciones puntuales (color según intervalo)
+  geom_point(aes(y = Delta_Est, color = ContainsZero), size = 2) +
+
+  # Añadir números sobre cada intervalo (nodo original)
+  geom_text(aes(y = CI95_Upper + 0.1, label = Node), size = 3, hjust = 0.5) +
+
+  # Línea horizontal en delta = 0
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+
+  # Personalización
+  scale_color_manual(values = c("TRUE" = "gray70", "FALSE" = "blue")) +  # Colores según inclusión de 0
+  labs(
+    title = "Inferencia sobre los parámetros delta",
+    x = NULL,  # Eliminar etiquetas del eje x
+    y = expression(delta)
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "none",  # Ocultar leyenda
+    axis.text.x = element_blank(),  # Eliminar etiquetas del eje x
+    axis.ticks.x = element_blank()  # Eliminar marcas del eje x
+  )
+```
+
+
+Los parámetros \(\delta_i\) representan la **socialidad individual** de cada individuo, es decir, su propensión a formar conexiones en la red. 
+
+- **Valores positivos** indican una mayor tendencia a conectarse (**alta socialidad**).  
+- **Valores negativos** reflejan una menor tendencia (**baja socialidad**).  
+- **Valores cercanos a cero** sugieren un comportamiento promedio.  
+
+La varianza \(\tau^2\) mide la **heterogeneidad** entre los \(\delta_i\):  
+- **Alta varianza \(\tau^2\)** implica mayor dispersión en la socialidad (nodos centrales y periféricos).  
+- **Baja varianza \(\tau^2\)** sugiere una red socialmente homogénea.
+
+
+#### Probabilidades de interacción
+
+
+La **matriz estimada de probabilidades de interacción** se calcula iterando sobre las **muestras posteriores** del modelo y evaluando \(\theta_{ij} = \Phi(\mu + \delta_i + \delta_j)\) para **cada par de nodos**. Finalmente, se **promedian** estas **matrices** a lo largo de todas las **muestras** para obtener la **probabilidad esperada de conexión** entre los **nodos**.
+
+
+```{r interprobs function}
+# Función para calcular la matriz de probabilidades theta_ij
+compute_theta <- function(samples) {
+  n_samples <- length(samples$mu)
+  n <- ncol(samples$delta)
+  theta_avg <- matrix(0, n, n) # Inicializar matriz promedio
+  # Iterar sobre cada muestra
+  for (s in 1:n_samples) {
+    mu <- samples$mu[s]
+    delta <- samples$delta[s, ]
+    theta <- matrix(0, n, n)
+    # Calcular theta_ij para cada par (i, j)
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        theta[i, j] <- pnorm(mu + delta[i] + delta[j]) # Probit link
+        theta[j, i] <- theta[i, j]  # Simetría
+      }
+    }
+    # Promediar sobre las muestras
+    theta_avg <- theta_avg + theta/n_samples
+  }
+  return(theta_avg)
+}
+```
+
+
+```{r interprobs lazega}
+# Calcular la matriz promedio de theta_ij
+theta_avg <- compute_theta(samples)
+```
+
+
+```{r viz interprobs lazega, echo=FALSE, fig.height = 6, fig.width = 12, fig.align='center'}
+# Librerías necesarias
+suppressMessages(suppressWarnings(library(ggplot2)))
+suppressMessages(suppressWarnings(library(reshape2)))
+suppressMessages(suppressWarnings(library(gridExtra)))
+# Función para graficar una matriz como heatmap
+plot_matrix <- function(matrix_data, title) {
+  # Convertir la matriz a formato largo
+  matrix_df <- melt(matrix_data)
+  colnames(matrix_df) <- c("Nodo_i", "Nodo_j", "Valor")
+  # Crear el heatmap
+  ggplot(matrix_df, aes(x = Nodo_i, y = Nodo_j, fill = Valor)) +
+    geom_tile() +
+    scale_fill_gradient(low = "white", high = "blue") + # Gradiente de color
+    theme_minimal() +
+    labs(
+      title = title,
+      x = "Nodo i",
+      y = "Nodo j",
+      fill = "Valor"
+    ) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+# Visualización lado a lado
+p1 <- plot_matrix(theta_avg, "Probabilidades de interacción")
+p2 <- plot_matrix(Y, "Matriz de adyacencia observada")
+# Mostrar gráficos juntos
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+#### Agrupamiento
+
+
+Las **probabilidades de coagrupamiento** (*Co-clustering probabilities*) se estiman a partir del **agrupamiento de los parámetros de sociabilidad** \(\delta_i\) en cada iteración del muestreador de Gibbs. El procedimiento utiliza el algoritmo **k-means** para asignar grupos en cada iteración y calcula las probabilidades de pertenencia conjunta al mismo grupo.
+
+
+```{r clustering function}
+# Librerías
+suppressMessages(suppressWarnings(library(cluster)))    # Para la silueta
+suppressMessages(suppressWarnings(library(factoextra))) # Para validación de clusters
+# Función para determinar automáticamente el número óptimo de clusters
+find_optimal_k <- function(delta) {
+  max_k <- min(10, length(delta)) # Máximo número de clusters a evaluar
+  wss <- numeric(max_k) # Suma de cuadrados dentro de los clusters
+  # Calcular WSS para cada k
+  for (k in 2:max_k) {
+    model <- kmeans(delta, centers = k, nstart = 10)
+    wss[k] <- model$tot.withinss # Suma de cuadrados dentro del cluster
+  }
+  # Método de codo para encontrar el punto óptimo
+  optimal_k <- which(diff(diff(wss)) > 0)[1] + 1
+  if (is.na(optimal_k)) optimal_k <- 2 # Por defecto al menos 2 clusters
+  return(optimal_k)
+}
+# Función para calcular probabilidades de coagrupamiento
+compute_coclustering <- function(samples) {
+  n_samples <- length(samples$mu)  # Número de muestras
+  n <- ncol(samples$delta)         # Número de nodos
+  coclustering <- matrix(0, n, n)  # Inicializar matriz de coagrupamiento
+  # Iterar sobre cada muestra
+  for (s in 1:n_samples) {
+    # Obtener los delta para la muestra actual
+    delta <- samples$delta[s, ]
+    # Determinar automáticamente el número óptimo de clusters
+    k <- find_optimal_k(delta)
+    # Aplicar k-means con el k óptimo
+    clusters <- kmeans(delta, centers = k, nstart = 10)$cluster
+    # Actualizar matriz de co-clustering
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        if (clusters[i] == clusters[j]) {
+          coclustering[i, j] <- coclustering[i, j] + 1
+          coclustering[j, i] <- coclustering[i, j] # Simetría
+        }
+      }
+    }
+  }
+  # Promediar sobre el número total de muestras
+  coclustering <- coclustering / n_samples
+  return(coclustering)
+}
+```
+
+
+```{r clustering lazega}
+# Calcular probabilidades de coagrupamiento
+coclustering_probs <- compute_coclustering(samples)
+```
+
+
+```{r viz clustering lazega, echo=FALSE, fig.height = 5, fig.width = 15, fig.align='center'}
+# Librerías
+suppressMessages(suppressWarnings(library(ggplot2)))
+suppressMessages(suppressWarnings(library(reshape2)))
+suppressMessages(suppressWarnings(library(gridExtra)))
+suppressMessages(suppressWarnings(library(mclust))) # Para clustering basado en modelos
+
+# Función para reordenar matrices según los clusters estimados
+reorder_matrix <- function(matrix_data, cluster_labels) {
+  order <- order(cluster_labels) # Ordenar índices por clusters
+  return(matrix_data[order, order]) # Reordenar filas y columnas
+}
+
+# Función para visualizar matrices como heatmaps
+plot_matrix <- function(matrix_data, title) {
+  # Convertir a formato largo para ggplot
+  matrix_df <- melt(matrix_data)
+  colnames(matrix_df) <- c("Nodo_i", "Nodo_j", "Valor")
+  # Crear el heatmap
+  ggplot(matrix_df, aes(x = Nodo_i, y = Nodo_j, fill = Valor)) +
+    geom_tile() +
+    scale_fill_gradient(low = "white", high = "blue") +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = "Nodo i",
+      y = "Nodo j",
+      fill = "Valor"
+    ) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+# 1. Estimación puntual de clusters usando Mclust
+estimate_clusters_mclust <- function(coclustering_probs) {
+  # Aplicar Mclust directamente sobre las probabilidades
+  mclust_result <- Mclust(coclustering_probs, verbose = F) # Modelo basado en mezclas gaussianas
+  clusters <- mclust_result$classification    # Etiquetas de cluster
+  return(clusters)
+}
+
+# 2. Crear matriz binaria E para pertenencia al mismo cluster
+compute_binary_E <- function(clusters) {
+  n <- length(clusters)
+  E <- matrix(0, n, n)
+  for (i in 1:(n - 1)) {
+    for (j in (i + 1):n) {
+      if (clusters[i] == clusters[j]) {
+        E[i, j] <- 1
+        E[j, i] <- 1 # Simetría
+      }
+    }
+  }
+  return(E)
+}
+
+# 3. Procesamiento y visualización
+# Estimar clusters usando Mclust
+clusters <- estimate_clusters_mclust(coclustering_probs)
+
+# Crear la matriz binaria E
+E <- compute_binary_E(clusters)
+
+# Reordenar las matrices según los clusters estimados
+coclustering_reordered <- reorder_matrix(coclustering_probs, clusters)
+E_reordered <- reorder_matrix(E, clusters)
+Y_reordered <- reorder_matrix(Y, clusters)
+
+# Visualización de las tres matrices reordenadas
+p1 <- plot_matrix(coclustering_reordered, "Co-clustering probabilities")
+p2 <- plot_matrix(E_reordered, "Estimación puntual de clusters")
+p3 <- plot_matrix(Y_reordered, "Matriz de adyacencia observada")
+
+# Mostrar gráficos en un panel
+gridExtra::grid.arrange(p1, p2, p3, ncol = 3)
+```
+
+
+```{r inference delta lazega 2, echo=F, fig.align='center'}
+# Librerías
+suppressMessages(suppressWarnings(library(ggplot2)))
+
+# 1. Calcular las estimaciones y los intervalos de credibilidad
+delta_mean <- colMeans(samples$delta)  # Media posterior de delta
+delta_ci95 <- apply(samples$delta, 2, quantile, probs = c(0.025, 0.975))  # IC al 95%
+
+# 2. Crear el DataFrame
+delta_df <- data.frame(
+  Node = 1:n,  # Nodo original
+  Delta_Est = delta_mean,  # Media posterior
+  CI95_Lower = delta_ci95[1, ],  # Límite inferior
+  CI95_Upper = delta_ci95[2, ]   # Límite superior
+)
+
+# 3. Añadir información de clusters estimados
+delta_df$Cluster <- as.factor(clusters)  # Etiquetas de clusters como factores
+
+# 4. Ordenar el DataFrame por la media posterior de \(\delta_i\)
+delta_df <- delta_df[order(delta_df$Delta_Est), ]
+delta_df$Order <- 1:n  # Nueva posición ordenada según \(\delta_i\)
+
+# 5. Graficar
+ggplot(delta_df, aes(x = Order, y = Delta_Est, color = Cluster)) +
+  # Intervalos de credibilidad al 95%
+  geom_segment(aes(
+    x = Order, xend = Order,
+    y = CI95_Lower, yend = CI95_Upper
+  ), size = 0.8) +  # Líneas verticales
+  
+  # Líneas horizontales pequeñas en los extremos
+  geom_segment(aes(
+    x = Order - 0.2, xend = Order + 0.2, y = CI95_Lower, yend = CI95_Lower
+  ), size = 0.8) +  # Extremo inferior
+  geom_segment(aes(
+    x = Order - 0.2, xend = Order + 0.2, y = CI95_Upper, yend = CI95_Upper
+  ), size = 0.8) +  # Extremo superior
+
+  # Estimaciones puntuales
+  geom_point(size = 2) +
+
+  # Añadir números sobre cada intervalo (nodo original)
+  geom_text(aes(y = CI95_Upper + 0.1, label = Node), size = 3, hjust = 0.5) +
+
+  # Línea horizontal en delta = 0
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+
+  # Personalización
+  scale_color_manual(values = rainbow(length(unique(clusters)))) + # Colores automáticos para clusters
+  labs(
+    title = "Inferencia sobre los parámetros delta",
+    x = NULL,  # Eliminar etiquetas del eje x
+    y = expression(delta)
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "right",  # Mostrar leyenda de clusters
+    axis.text.x = element_blank(),  # Eliminar etiquetas del eje x
+    axis.ticks.x = element_blank()  # Eliminar marcas del eje x
+  )
+```
+
+
+#### Bondad de ajuste {-}
+
+
+La **validación del modelo** mediante la **distribución predictiva posterior** evalúa su capacidad para reproducir las **características estructurales** de la **red real**. 
+
+Se generan **redes simuladas** en cada iteración del **muestreador Gibbs** y se calculan **estadísticas de prueba** como **densidad**, **transitividad**, **asortatividad**, **distancia geodésica promedio**, **grado promedio** y **desviación estándar del grado**. 
+
+Estas se comparan con las **distribuciones posteriores simuladas**, reportando la **media posterior** y el **intervalo de credibilidad al 95%**, proporcionando evidencia de **ajuste** y **adecuación** del **modelo propuesto**.
+
+
+```{r test lazega}
+# Calcular las estadísticas observadas en la red real
+obs_density <- edge_density(g)  # Densidad
+obs_transitivity <- transitivity(g, type = "global")  # Transitividad
+obs_assortativity <- assortativity_degree(g, directed = FALSE)  # Asortatividad
+obs_avg_path <- mean_distance(g, directed = FALSE)  # Distancia geodésica promedio
+obs_avg_degree <- mean(degree(g))  # Grado promedio
+obs_sd_degree <- sd(degree(g))  # Desviación estándar del grado
+# Guardar en un vector
+obs_stats <- c(
+  Density = obs_density,
+  Transitivity = obs_transitivity,
+  Assortativity = obs_assortativity,
+  AvgPathLength = obs_avg_path,
+  AvgDegree = obs_avg_degree,
+  SD_Degree = obs_sd_degree
+)
+```
+
+
+```{r test lazega 2}
+# Inicializar listas para almacenar estadísticas simuladas
+sim_density <- c()
+sim_transitivity <- c()
+sim_assortativity <- c()
+sim_avg_path <- c()
+sim_avg_degree <- c()
+sim_sd_degree <- c()
+# Iterar sobre las muestras del muestreador
+for (iter in 1:length(samples$mu)) {
+  # Extraer parámetros para esta iteración
+  mu <- samples$mu[iter]
+  delta <- samples$delta[iter, ]
+  # Construir la matriz de probabilidad
+  P <- pnorm(mu + outer(delta, delta, "+"))
+  # Simular la red binaria
+  Y_sim <- matrix(rbinom(length(P), size = 1, prob = P), n, n)
+  Y_sim[lower.tri(Y_sim)] <- t(Y_sim)[lower.tri(Y_sim)]  # Simetrizar
+  diag(Y_sim) <- 0  # Sin bucles
+  # Crear grafo a partir de la matriz simulada
+  g_sim <- graph_from_adjacency_matrix(Y_sim, mode = "undirected")
+  # Calcular estadísticas para la red simulada
+  sim_density <- c(sim_density, edge_density(g_sim))
+  sim_transitivity <- c(sim_transitivity, transitivity(g_sim, type = "global"))
+  sim_assortativity <- c(sim_assortativity, assortativity_degree(g_sim, directed = FALSE))
+  sim_avg_path <- c(sim_avg_path, mean_distance(g_sim, directed = FALSE))
+  sim_avg_degree <- c(sim_avg_degree, mean(degree(g_sim)))
+  sim_sd_degree <- c(sim_sd_degree, sd(degree(g_sim)))
+}
+```
+
+
+```{r viz test lazega, echo=F, fig.align='center'}
+# Nombres de los estadísticos
+stat_names <- c("Densidad", "Transitividad", "Asortatividad", 
+                "Dist. Geodésica", "Grado Promedio", "Desv. del Grado")
+
+# Estadísticos observados
+obs_stats <- c(
+  obs_density,         # Densidad observada
+  obs_transitivity,    # Transitividad observada
+  obs_assortativity,   # Asortatividad observada
+  obs_avg_path,        # Distancia geodésica promedio observada
+  obs_avg_degree,      # Grado promedio observado
+  obs_sd_degree        # Desviación estándar del grado observada
+)
+
+# Estadísticos simulados
+simulated_stats <- list(
+  sim_density,         # Simulaciones para densidad
+  sim_transitivity,    # Simulaciones para transitividad
+  sim_assortativity,   # Simulaciones para asortatividad
+  sim_avg_path,        # Simulaciones para distancia geodésica
+  sim_avg_degree,      # Simulaciones para grado promedio
+  sim_sd_degree        # Simulaciones para desviación estándar del grado
+)
+
+# Crear DataFrame vacío con columnas definidas
+plot_data <- data.frame(
+  sims = numeric(0),
+  stat_name = character(0),
+  obs = numeric(0),
+  mean_post = numeric(0),
+  ci_lower = numeric(0),
+  ci_upper = numeric(0)
+)
+
+# Llenar el DataFrame en el bucle
+for (i in 1:6) {
+  sims <- simulated_stats[[i]]  # Simulaciones para el estadístico i
+  obs <- obs_stats[i]  # Valor observado
+  
+  # Calcular la media posterior y los intervalos al 95%
+  mean_post <- mean(sims)  # Media posterior
+  ci_lower <- quantile(sims, 0.025)  # Límite inferior del IC 95%
+  ci_upper <- quantile(sims, 0.975)  # Límite superior del IC 95%
+  
+  # Crear DataFrame temporal para esta iteración
+  temp_df <- data.frame(
+    sims = sims,
+    stat_name = rep(stat_names[i], length(sims)),
+    obs = rep(obs, length(sims)),
+    mean_post = rep(mean_post, length(sims)),
+    ci_lower = rep(ci_lower, length(sims)),
+    ci_upper = rep(ci_upper, length(sims))
+  )
+  
+  # Concatenar datos
+  plot_data <- rbind(plot_data, temp_df)
+}
+
+# Graficar en paneles 3x2
+ggplot(plot_data, aes(x = sims)) +
+  geom_histogram(aes(y = ..density..), color = "gray60", fill = "gray90", bins = 30, alpha = 0.8) +
+  geom_vline(aes(xintercept = obs), color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean_post), color = "blue", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = ci_lower), color = "blue", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = ci_upper), color = "blue", linetype = "dashed", size = 1) +
+  facet_wrap(~ stat_name, nrow = 3, ncol = 2, scales = "free") +
+  labs(x = "Valor", y = "Densidad", title = "Comparación de Estadísticos Simulados") +
+  theme_minimal(base_size = 12)
+```
+
+
+#### Validación cruzada
+
+
+La **validación cruzada** implementada divide los elementos de la matriz de adyacencia \(Y\) (triangular superior) en dos subconjuntos: **entrenamiento (80%)** y **validación (20%)**. Los valores faltantes en el conjunto de entrenamiento se tratan como **datos latentes** y se actualizan iterativamente mediante un **muestreador de Gibbs**, donde en cada iteración se muestrean según la distribución muestral para mantener la coherencia del modelo. 
+
+Las observaciones faltantes muestreadas se almacenan para calcular la **probabilidad posterior** de conexión promediando los valores generados a lo largo del algoritmo. Finalmente, estas probabilidades predictivas se comparan con los datos reales de validación, evaluando el rendimiento del modelo mediante la **curva ROC** y el **AUC** para medir su capacidad discriminativa.
+
+
+```{r gibbs cv}
+# Librerías necesarias
+suppressWarnings(
+  suppressMessages({
+    library(igraph)
+    library(ggraph)
+    library(tidygraph)
+    library(pROC)
+    library(ggplot2)
+  })
+)
+
+# Funciones auxiliares para muestreo Gibbs
+gibbs_sampler_missing <- function(Y, n_iter, n_burn, n_thin, valid_indices, indices) {
+  n <- nrow(Y)
+  # Inicialización de parámetros
+  mu <- 0
+  delta <- rnorm(n, 0, 1)
+  sigma2 <- 1
+  tau2 <- 1
+  z <- matrix(0, n, n)  # Variables auxiliares
+  # Almacenamiento solo para Y_missing
+  n_samples <- (n_iter - n_burn) / n_thin
+  Y_missing_samples <- matrix(0, nrow = n_samples, ncol = length(valid_indices))
+  cat("Iniciando muestreador de Gibbs...
+")
+  for (t in 1:n_iter) {
+    # Paso 1: Muestrear los Y faltantes
+    for (idx in valid_indices) {
+      i <- indices[idx, 1]
+      j <- indices[idx, 2]
+      eta_ij <- mu + delta[i] + delta[j]
+      prob_ij <- pnorm(eta_ij)
+      Y[i, j] <- rbinom(1, 1, prob_ij)
+      Y[j, i] <- Y[i, j]  # Simetría
+    }
+    # Paso 2: Actualizar parámetros condicionales completas
+    z <- sample_z(Y, mu, delta, z)
+    mu <- sample_mu(z, delta, sigma2)
+    delta <- sample_delta(z, mu, tau2, delta)
+    sigma2 <- sample_sigma2(mu)
+    tau2 <- sample_tau2(delta)
+    # Paso 3: Almacenar solo muestras de Y_missing según n_thin
+    if (t > n_burn && (t - n_burn) %% n_thin == 0) {
+      idx_sample <- (t - n_burn) / n_thin
+      Y_missing_samples[idx_sample, ] <- sapply(valid_indices, function(k) {
+        i <- indices[k, 1]
+        j <- indices[k, 2]
+        Y[i, j]
+      })
+    }
+    # Mostrar progreso
+    if (t %% (n_iter / 10) == 0) {
+      cat(sprintf("Progreso: %d%% completado\n", (t / n_iter) * 100))
+    }
+  }
+  cat("Muestreador completado.\n")
+  return(Y_missing_samples)
+}
+```
+
+
+```{r hyperpars cv lazega}
+# Hiperparámetros
+a_sigma <- 2 
+b_sigma <- 1
+a_tau   <- 2 
+b_tau   <- 1
+```
+
+
+```{r folds cv lazega}
+# Crear folds excluyentes y exhaustivos
+set.seed(123)
+n <- nrow(Y)
+indices <- which(upper.tri(Y, diag = FALSE), arr.ind = TRUE)
+n_edges <- nrow(indices)
+L <- 5
+folds <- split(sample(1:n_edges), rep(1:L, length.out = n_edges))
+```
+
+
+```{r cv lazega, echo=T, eval=F}
+# Validación cruzada con 5 folds
+auc_values <- numeric(L)
+roc_list <- list()
+for (l in 1:L) {
+  cat("Procesando fold", l, "de", L, "\n")
+  valid_indices <- folds[[l]]
+  Y_train <- Y
+  for (idx in valid_indices) {
+    i <- indices[idx, 1]
+    j <- indices[idx, 2]
+    Y_train[i, j] <- NA
+    Y_train[j, i] <- NA
+  }
+  # Muestreador Gibbs
+  n_iter <- 100000 + 10000 
+  n_burn <- 10000
+  n_thin <- 5
+  Y_missing_samples <- gibbs_sampler_missing(Y_train, n_iter, n_burn, n_thin, valid_indices, indices)
+  # Evaluación de resultados
+  Y_valid_values <- Y[indices[valid_indices, ]]
+  prob_missing <- colMeans(Y_missing_samples)
+  roc_curve <- roc(Y_valid_values, prob_missing)
+  auc_values[l] <- auc(roc_curve)
+  roc_data <- data.frame(
+    FPR = 1 - roc_curve$specificities,
+    TPR = roc_curve$sensitivities
+  )
+  roc_list[[l]] <- roc_data
+}
+# Guardar resultados
+save(auc_values, file = "auc_values.RData")
+save(roc_list, file = "roc_list.RData")
+```
+
+
+```{r, echo=F, eval=T}
+load("C:/Users/User/Dropbox/UN/estadistica_bayesiana/auc_values.RData")
+load("C:/Users/User/Dropbox/UN/estadistica_bayesiana/roc_list.RData")
+```
+
+
+```{r auc cv lazega}
+# Promedio y desviación estándar del AUC
+auc_mean <- mean(auc_values)
+auc_sd <- sd(auc_values)
+cat("AUC promedio:", round(auc_mean, 3), "\n")
+cat("AUC CV:", round(auc_sd/auc_mean, 3), "\n")
+```
+
+
+```{r viz cv lazega, fig.align='center'}
+# Graficar todas las curvas ROC en un solo panel
+ggplot() +
+  geom_line(data = do.call(rbind, lapply(1:L, function(l) cbind(roc_list[[l]], fold = l))),
+            aes(x = FPR, y = TPR, color = as.factor(fold)), size = 1, alpha = 0.6) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") +
+  labs(title = "Curvas ROC para los 5 folds", x = "FPR", y = "TPR", color = "Fold") +
+  theme_minimal(base_size = 14)
+```
+
+
+# Modelo con covariables nodales
+
+El modelo para la probabilidad de conexión entre dos nodos se define como:  
+\[
+y_{i,j} \mid \theta_{i,j} \overset{\text{iid}}{\sim} \textsf{Ber}(\theta_{i,j}), \quad \text{para } i < j,
+\]
+donde la probabilidad \(\theta_{i,j}\) está dada por:  
+\[
+\theta_{i,j} = \Phi(\mu + \delta_i + \delta_j + \boldsymbol{x}_{i,j}^{\top} \boldsymbol{\beta}),
+\]
+donde:  
+
+- \(\boldsymbol{x}_{i,j}\): Es un vector de **covariables nodales** asociado con el par \((i, j)\).  
+- \(\boldsymbol{\beta}\): Representa un vector de **coeficientes** que cuantifican los efectos de las covariables sobre la **probabilidad de conexión**.
+
+Las covariables \(\boldsymbol{x}_{i,j}\) deben ser **escaladas** para garantizar **estabilidad numérica** y evitar problemas de **convergencia** durante la estimación. El modelo puede incorporar covariables específicas para cada nodo (\(\boldsymbol{x}_i\) y \(\boldsymbol{x}_j\)) y modelarlas mediante combinaciones lineales, como:
+\[
+\theta_{i,j} = \Phi\left( \mu + \delta_i + \delta_j + \boldsymbol{x}_i^{\top} \boldsymbol{\beta}_1 + \boldsymbol{x}_j^{\top} \boldsymbol{\beta}_2 \right).
+\]
+Esto permite diferenciar los efectos de las covariables de los nodos origen y destino en la probabilidad de conexión.
