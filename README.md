@@ -17,3 +17,6 @@ Materiales del curso de Análisis Estadístico de Redes Sociales ofreciendo en e
 11. Modelos de grafos aleatorios exponenciales.
 12. Modelos de bloques estocásticos.
 13. Modelos de espacio latente.
+14. Modelo de sociabilidad.
+15. Modelo de sociabilidad para redes multicapa.
+16. Modelo de sociabilidad para redes dinámicas.
