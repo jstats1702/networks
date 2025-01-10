@@ -295,5 +295,6 @@ plot(g, layout = layout_with_fr, vertex.label = NA, vertex.size = 5, vertex.colo
 # Referencias {-}
 
 ```{r, eval = TRUE, echo=FALSE, out.width="25%", fig.pos = 'H', fig.align = 'center'}
-knitr::include_graphics("KCbookcover1.jpg")
+knitr::include_graphics("01_cover_KC.jpg")
 ```
+
