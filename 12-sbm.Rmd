@@ -18,68 +18,76 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 # Introducción
 
-Se asume que **los vértices de una red pertenecen a clases** y que la propensión a establecer vínculos entre pares de vértices depende de la pertenencia de clase de los dos vértices.
+Se asume que **los vértices de una red están asociados a diferentes clases**, y la propensión a formar vínculos entre pares de vértices está influenciada por la clase a la que pertenecen ambos vértices.
 
-Los enlaces se producen debido a la **equivalencia estructural** (*structural equivalence*), es decir, la similitud de los roles sociales.
+Los vínculos surgen como resultado de la **equivalencia estructural** (*structural equivalence*), que refleja la similitud en los roles sociales desempeñados por los vértices.
 
 
 ```{r, eval = TRUE, echo=FALSE, out.width="95%", fig.pos = 'H', fig.align = 'center'}
 knitr::include_graphics("sbm_caracteristicas_estructurales.png")
 ```
 
-[***Sosa, J., & Buitrago, L. (2021). A review of latent space models for social networks. Revista Colombiana de Estadística, 44(1), 171-200.***](https://revistas.unal.edu.co/index.php/estad/article/view/89369/84715)
 
 El vértice $i\in V$ del grafo $G=(V,E)$ pertenece a **una sola clase (comunidad)** de una partición $\mathcal{P} = \{C_1,\ldots,C_Q\}$ de $V$  con $Q$ comunidades.
 
-El **modelo de bloques** se puede escribir como:
-$$
-p(\mathbf{y}\mid\boldsymbol{\theta}) = \frac{1}{\kappa}\,\exp{\left\{ \sum_{q,r}\theta_{q,r}\, L_{q,r}(\mathbf{y}) \right\}}
-$$
+El **modelo de bloques estocásticos** se define como:  
+\[
+p(\mathbf{y} \mid \boldsymbol{\theta}) = \frac{1}{\kappa} \exp{\left\{ \sum_{q,r} \theta_{q,r} \, L_{q,r}(\mathbf{y}) \right\}},
+\]  
 donde:
 
-- $\mathbf{y}=[y_{i,j}]$ es la realización de una matriz de adyacencia aleatoria $\mathbf{Y}=[Y_{i,j}]$ asociada con una **red binaria simple no dirigida**.
-- $L_{q,r}(\mathbf{y})$ es el **número de aristas** que conecta pares de vértices de las clases $q$ y $r$.
-- $q$ y $r$ indexan las **clases** y por lo tanto $q,r\in\{1,\ldots,Q\}$.
-- $\pi_{q,r}$ es la **probabilidad de interacción** de un vértice de la clase $q$ con un vértice de la clase $r$, i.e., $\pi_{q,r}=\textsf{Pr}(y_{i,j}=1\mid i\in C_q, j\in C_r)$. Para las redes no dirigidas se tiene que $\pi_{q,r}=\pi_{r,q}$.
-- $\boldsymbol{\theta}=(\theta_{1,1},\ldots,\theta_{Q,Q})$ es el **vector de parámetros** del modelo.
-- $\kappa\equiv\kappa(\boldsymbol{\theta})$ es la **constante de normalización**.
+- \(\mathbf{y} = [y_{i,j}]\) representa una realización de la matriz de adyacencia aleatoria \(\mathbf{Y} = [Y_{i,j}]\), asociada a una **red binaria simple no dirigida**.
+- \(L_{q,r}(\mathbf{y})\) denota el **número de aristas** que conectan pares de vértices pertenecientes a las clases \(q\) y \(r\).
+- \(q\) y \(r\) indexan las **clases**, de modo que \(q, r \in \{1, \ldots, Q\}\).
+- \(\pi_{q,r}\) es la **probabilidad de interacción** entre un vértice de la clase \(q\) y un vértice de la clase \(r\), es decir, \(\pi_{q,r} = \textsf{Pr}(y_{i,j} = 1 \mid i \in C_q, j \in C_r)\). Para redes no dirigidas, se cumple que \(\pi_{q,r} = \pi_{r,q}\).
+- \(\boldsymbol{\theta} = (\theta_{1,1}, \ldots, \theta_{Q,Q})\) es el **vector de parámetros** del modelo, relacionado con las probabilidades \(\pi_{q,r}\).
+- \(\kappa \equiv \kappa(\boldsymbol{\theta})\) es la **constante de normalización**, que asegura que \(p(\mathbf{y} \mid \boldsymbol{\theta})\) sea una distribución de probabilidad válida.
+
 
 # Modelo de bloques estocásticos
 
-En la práctica, **no se sabe** a qué clases pertenecen los vértices ni el número de clases.
+En la práctica, **no se conoce** ni la pertenencia de los vértices a las clases ni el número de clases. 
 
-La **pertenencia a una clase** (*class membership*) de cada vértice $i$ se determina de forma independiente, de acuerdo con una distribución de probabilidad común sobre el conjunto $\{1,\ldots,Q\}$:
-$$
+La **asignación de clase** (*class membership*) de cada vértice \(i\) se determina de manera independiente mediante una distribución de probabilidad común sobre el conjunto \(\{1, \ldots, Q\}\), representada como:  
+\[
 z_{i,q} = 
 \begin{cases} 
-1 & \mbox{si el vértice $i$ pertence a la comunidad $q$} \\
-0 & \mbox{en otro caso}
+1 & \text{si el vértice } i \text{ pertenece a la clase } q, \\
+0 & \text{en caso contrario}.
 \end{cases}
-$$
+\]
 
-Así, 
-$$
-\boldsymbol{z}_i\mid \boldsymbol{\alpha}\stackrel{\text{iid}}{\sim} \textsf{Multinomial}(1,\boldsymbol{\alpha})
-\qquad\Longleftrightarrow\qquad
-\textsf{Pr}(z_{i,q}=1\mid\alpha_q) = \alpha_q
-$$
-donde $\boldsymbol{z}_i=(z_{i,1},\ldots,z_{i,Q})$, para $i = 1,\ldots,n$, y $\boldsymbol{\alpha}=(\alpha_1,\ldots,\alpha_Q)$ con $\sum_{q=1}^Q\alpha_q = 1$.
+Por lo tanto,  
+\[
+\boldsymbol{z}_i \mid \boldsymbol{\alpha} \overset{\text{iid}}{\sim} \textsf{Multinomial}(1, \boldsymbol{\alpha})
+\quad \Longleftrightarrow \quad 
+\textsf{Pr}(z_{i,q} = 1 \mid \alpha_q) = \alpha_q,
+\]  
+donde \(\boldsymbol{z}_i = (z_{i,1}, \ldots, z_{i,Q})\) para \(i = 1, \ldots, n\), y \(\boldsymbol{\alpha} = (\alpha_1, \ldots, \alpha_Q)\) es el vector de probabilidades de clase, con la restricción \(\sum_{q=1}^Q \alpha_q = 1\).
 
-Por lo tanto, dados los valores de $\boldsymbol{z}_1,\ldots,\boldsymbol{z}_n$ se tiene que las díadas se pueden modelar como condicionalmente independientes con distribución Bernoulli:
-$$
-y_{i,j}\mid\mathbf{\Pi},\boldsymbol{z}_i,\boldsymbol{z}_j \stackrel{\text{ind}}{\sim} \textsf{Bernoulli}\left( \pi_{\xi_i,\xi_j} \right)
-$$
-donde $\mathbf{\Pi}=[\pi_{q,r}]$ es una martiz de $Q\times Q$ que contiene las probabilidades de interacción, y $\xi_i=\xi(\boldsymbol{z}_i)$ denota la posición $q$ en $\boldsymbol{z}_i$ tal que $z_{i,q} = 1$ (i.e., $\xi_i=q$ significa que el vértice $i$ hace parte de la comunidad $q$).
+Condicional a los valores de \(\boldsymbol{z}_1, \ldots, \boldsymbol{z}_n\), las díadas \((i,j)\) son modeladas como condicionalmente independientes, siguiendo una distribución Bernoulli:  
+\[
+y_{i,j} \mid \mathbf{\Pi}, \boldsymbol{z}_i, \boldsymbol{z}_j \overset{\text{ind}}{\sim} \textsf{Bernoulli}(\pi_{\xi_i, \xi_j}),
+\]  
+donde \(\mathbf{\Pi} = [\pi_{q,r}]\) es una matriz \(Q \times Q\) que contiene las probabilidades de interacción entre clases, y \(\xi_i = \xi(\boldsymbol{z}_i)\) denota la posición \(q\) en \(\boldsymbol{z}_i\) tal que \(z_{i,q} = 1\) (es decir, \(\xi_i = q\) implica que el vértice \(i\) pertenece a la clase \(q\)).
 
-Se han propuesto en la literatura varios métodos que aproximan o modifican el método de **máxima verosimilitud**. El paquete `blockmodels` implementa uno de esos métodos llamado **algoritmo EM variacional**, el cual optimiza un límite inferior en la verosimilitud de los datos observados.
+En la literatura, se han propuesto diversos métodos para aproximar o mejorar la **máxima verosimilitud** en este contexto. El paquete `blockmodels` implementa uno de estos métodos, conocido como el **algoritmo EM variacional**.
+
+El **algoritmo EM variacional** aproxima la **inferencia** en modelos con **variables ocultas**, donde calcular la **verosimilitud exacta** es intratable. En el **Paso E**, se actualiza una **distribución aproximada** (**variacional**) para las **variables latentes** maximizando un **límite inferior** de la **verosimilitud** (**ELBO**). En el **Paso M**, se ajustan los **parámetros del modelo** maximizando el mismo límite. A diferencia del **EM clásico**, utiliza una **aproximación eficiente** de la **posterior** en lugar de calcularla exactamente, lo que lo hace adecuado para modelos **complejos** o de **gran escala**.
+
 
 # Ejemplo: Blogs de política
 
-Red de blogs políticos franceses clasificados por el proyecto *Observatoire Presidentielle* en cuanto a afiliación política. Un enlace indica que al menos uno de los dos blogs hacía referencia al otro en su página web.
+Red de **referencias on-line** entre blogs políticos franceses clasificados por el proyecto [*Observatoire Presidentielle*](http://observatoire-presidentielle.fr/) en relación con su afiliación política. 
 
-Fuente original: http://observatoire-presidentielle.fr/
+Un enlace indica que al menos uno de los dos blogs **hace referencia** al otro en su página web. 
+
+Una descripción completa de los datos se puede encontrar [aquí](https://search.r-project.org/CRAN/refmans/sand/html/fblog.html).
+
+Disponible en el paquete `sand` de R.
 
 
 ```{r, fig.height = 6, fig.width = 6, fig.align='center'}
@@ -87,6 +95,8 @@ suppressMessages(suppressWarnings(library(igraph)))
 suppressMessages(suppressWarnings(library(sand)))
 # datos
 data(fblog)
+# Actualizar el grafo
+fblog <- igraph::upgrade_graph(fblog)
 # color de vertices
 cols <- RColorBrewer::brewer.pal(n = 9, name = "Set1")
 party.nums <- as.numeric(as.factor(V(fblog)$PolParty))
@@ -122,16 +132,30 @@ fblog.sbm <- blockmodels::BM_bernoulli(membership_type = "SBM_sym", adj = A, ver
 fblog.sbm$estimate()
 ```
 
-La **verosimilitud de clasificación de integración** (ICL, *integration classification likelihood*) es un criterio similar en espíritu a varios criterios de información de los modelos estándar, como el criterio de información de Akaike (AIC) y el criterio de información Bayesiana (BIC), pero adaptado específicamente para problemas de agrupamiento.
+
+La **verosimilitud de clasificación de integración** (ICL, *Integrated Classification Likelihood*) es un criterio diseñado específicamente para problemas de agrupamiento, que sigue un enfoque similar al de los criterios de información empleados en modelos estándar, como el **criterio de información de Akaike** (AIC) y el **criterio de información bayesiano** (BIC).
+
+La ICL considera explícitamente la **asignación de las clases** en modelos de agrupamiento, lo que lo hace especialmente adecuado para problemas de agrupamiento o modelos de mezcla:
+\[
+\text{ICL} = \log p(\mathbf{y}, \hat{\mathbf{z}} \mid \hat{\boldsymbol{\theta}}) - \frac{\nu}{2} \log n,
+\]
+donde:
+
+- \(\mathbf{y}\): Datos observados.
+- \(\hat{\mathbf{z}}\): Asignaciones de clase estimadas.
+- \(\hat{\boldsymbol{\theta}}\): Parámetros del modelo estimados.
+- \(p(\mathbf{y}, \hat{\mathbf{z}} \mid \hat{\boldsymbol{\theta}})\): Verosimilitud completa, considerando tanto los datos observados como las asignaciones de clase.
+- \(\nu\): Número de parámetros del modelo.
+- \(n\): Número de vértices.
+
+El término \(\log p(\mathbf{y}, \hat{\mathbf{z}} \mid \hat{\boldsymbol{\theta}})\) mide la **calidad del ajuste del modelo**, considerando tanto los datos como las asignaciones de clase. El término de penalización \(-\frac{\nu}{2} \log n\) controla el sobreajuste, penalizando modelos más complejos en función del número de parámetros y el tamaño de los datos.
 
 
 ```{r, fig.width=6, fig.height=6}
 # ICL
-ICLs <- fblog.sbm$ICL
-ICLs
-# n. de grupos optimo
-Q <- which.max(ICLs)
-Q
+(ICLs <- fblog.sbm$ICL)
+# número de grupos optimo
+(Q <- which.max(ICLs))
 ```
 
 
@@ -143,10 +167,11 @@ lines(x = c(Q,Q), y = c(min(ICLs),max(ICLs)), col = "red", lty = 2)
 ```
 
 
-Se pueden obtener las estimaciones de la **probabilidad de pertenencia a las comunidades**, es decir, las estimaciones de los valores esperados de los $\boldsymbol{z}_i$, dado $\mathbf{Y} = \mathbf{y}$.
+Es posible estimar las **probabilidades de pertenencia a las comunidades**, es decir, los valores esperados de \(\boldsymbol{z}_i\) condicionados a \(\mathbf{Y} = \mathbf{y}\). 
 
 
-Estas estimaciones se pueden usar para determinar las **etiquetas de las asignaciones** a las comunidades (*cluster assignments* o *class memberships*). Esto se puede lograr por medio de la **probabilidad máximal** (superiores a 0.8586 en este caso).
+Estas estimaciones permiten determinar las **etiquetas de asignación** a las comunidades (*cluster assignments* o *class memberships*), utilizando un criterio basado en la **probabilidad máxima**. En este caso, se asigna un vértice a la comunidad correspondiente si su probabilidad de pertenencia supera un umbral predefinido (por ejemplo, 0.8586).
+
 
 ```{r}
 # probabilidades estimadas de pertenencia a las comunidades
@@ -174,15 +199,17 @@ round(alpha[order(alpha, decreasing = T)], 3)
 
 **Probabilidades de interacción** (*intection probabilities*) $\mathbf{\Pi}=[\pi_{q,r}]$:
 
+
 ```{r, fig.width=12, fig.height=6, fig.align='center'}
-# matriz de probabilidades de interaccion
+# matriz de probabilidades de interacción
 Pi <- fblog.sbm$model_parameters[[Q]]$pi
-round(Pi, 3)
-# grafico
+# gráfico
 corrplot::corrplot(corr = Pi, type = "full", col.lim = c(0,1),  method = "shade", addgrid.col = "gray90", tl.col = "black")
 ```
 
-*Grafo* y **Matriz de adyacencia**:
+
+*Grafo* y **matriz de adyacencia**:
+
 
 ```{r, fig.width=12, fig.height=6, fig.align='center'}
 # funciones
@@ -231,15 +258,15 @@ abline(v = tmp$d+.5, h = tmp$d+.5)
 ```
 
 
-
 **Comparación** con el agrupamiento natural:
+
 
 ```{r}
 # agrupamiento natural
 party.nums <- as.numeric(as.factor(V(fblog)$PolParty))
 # agrupamiento estimado
 labs <- apply(X = Z, MARGIN = 1, FUN = which.max)
-# comparacion
+# comparación
 round(igraph::compare(comm1 = party.nums, comm2 = labs, method = "rand"), 4)
 round(igraph::compare(comm1 = party.nums, comm2 = labs, method = "adjusted.rand"), 4)
 round(igraph::compare(comm1 = party.nums, comm2 = labs, method = "nmi"), 4)
@@ -249,11 +276,12 @@ table(party.nums, labs)
 
 Para realizar la **bondad de ajuste** del modelo se pueden usar estadísticos de prueba por medio de métodos de simulación.
 
+
 ```{r, fig.align='center'}
 # simulación
 alpha <- table(labs)/vcount(fblog)
 Pi <- fblog.sbm$model_parameters[[Q]]$pi
-Pi <- 0.5*(t(Pi) + Pi) # asegurarse que Pi sea simétrica
+Pi <- 0.5*(t(Pi) + Pi)  # asegurarse que Pi sea simétrica
 bs <- stats::rmultinom(n = 1, size = vcount(fblog), prob = alpha)
 set.seed(42)
 g <- igraph::sample_sbm(n = vcount(fblog), pref.matrix = Pi, block.sizes = bs, directed = F)
@@ -262,6 +290,7 @@ par(mfrow = c(1,1), mar = 0.2*c(1,1,1,1))
 set.seed(42)
 plot(g, layout = layout_with_fr, vertex.label = NA, vertex.size = 5, vertex.color = 1, vertex.frame.color = 1, edge.color = adjustcolor("black",0.1))
 ```
+
 
 # Referencias {-}
 
