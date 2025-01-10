@@ -41,6 +41,7 @@ donde:
   3. **Modelo factorial**: \(\alpha(\boldsymbol{u}_i, \boldsymbol{u}_j) = \boldsymbol{u}_i^\textsf{T} \mathbf{\Lambda} \boldsymbol{u}_j\), donde \(\mathbf{\Lambda} = \textsf{diag}(\lambda_1, \ldots, \lambda_k)\) es una matriz diagonal de dimensión \(k \times k\).
 
 Para implementar este modelo, es necesario especificar:
+
 1. La dimensión latente \(k\).
 2. La distribución de las variables latentes.
 3. La forma funcional de \(\alpha(\cdot, \cdot)\).
