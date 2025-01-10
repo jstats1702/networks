@@ -178,7 +178,7 @@ Estas estimaciones permiten determinar las **etiquetas de asignación** a las co
 Z <- fblog.sbm$memberships[[Q]]$Z
 head(x = round(Z,3), n = 10)
 tail(x = round(Z,3), n = 10)
-# dimension
+# dimensión
 dim(Z)
 # asignaciones
 labs <- apply(X = Z, MARGIN = 1, FUN = which.max)
@@ -277,19 +277,76 @@ table(party.nums, labs)
 Para realizar la **bondad de ajuste** del modelo se pueden usar estadísticos de prueba por medio de métodos de simulación.
 
 
-```{r, fig.align='center'}
-# simulación
-alpha <- table(labs)/vcount(fblog)
+```{r}
+# Cargar librerías necesarias
+suppressMessages(suppressWarnings(library(knitr)))
+suppressMessages(suppressWarnings(library(kableExtra)))
+
+# Calcular las estadísticas observadas
+observed_density <- edge_density(fblog)
+observed_transitivity <- transitivity(fblog, type = "global")
+observed_assortativity <- assortativity_degree(fblog)
+
+# Probabilidades de interacción
+labs <- apply(X = Z, MARGIN = 1, FUN = which.max)
+alpha <- table(labs) / vcount(fblog)  # Distribución de comunidades
 Pi <- fblog.sbm$model_parameters[[Q]]$pi
 Pi <- 0.5*(t(Pi) + Pi)  # asegurarse que Pi sea simétrica
-bs <- stats::rmultinom(n = 1, size = vcount(fblog), prob = alpha)
+
+# Inicializar vectores para estadísticas simuladas
+n_sim <- 1000
+simulated_densities <- numeric(n_sim)
+simulated_transitivities <- numeric(n_sim)
+simulated_assortativities <- numeric(n_sim)
+
+# Simular redes y calcular estadísticas
 set.seed(42)
-g <- igraph::sample_sbm(n = vcount(fblog), pref.matrix = Pi, block.sizes = bs, directed = F)
-# gráfico
-par(mfrow = c(1,1), mar = 0.2*c(1,1,1,1))
-set.seed(42)
-plot(g, layout = layout_with_fr, vertex.label = NA, vertex.size = 5, vertex.color = 1, vertex.frame.color = 1, edge.color = adjustcolor("black",0.1))
+for (i in 1:n_sim) {
+  # Generar red simulada
+  bs <- stats::rmultinom(n = 1, size = vcount(fblog), prob = alpha)
+  g_sim <- igraph::sample_sbm(n = vcount(fblog), pref.matrix = Pi, block.sizes = bs, directed = FALSE)
+  
+  # Calcular estadísticas de la red simulada
+  simulated_densities[i] <- edge_density(g_sim)
+  simulated_transitivities[i] <- transitivity(g_sim, type = "global")
+  simulated_assortativities[i] <- assortativity_degree(g_sim)
+}
+
+# Calcular intervalos de confianza al 95% basados en percentiles
+ci_lower <- c(
+  quantile(simulated_densities, 0.025),
+  quantile(simulated_transitivities, 0.025),
+  quantile(simulated_assortativities, 0.025)
+)
+
+ci_upper <- c(
+  quantile(simulated_densities, 0.975),
+  quantile(simulated_transitivities, 0.975),
+  quantile(simulated_assortativities, 0.975)
+)
+
+# Crear la tabla de resultados
+resultados <- data.frame(
+  Estadística = c("Densidad", "Transitividad", "Asortatividad"),
+  Observado = c(observed_density, observed_transitivity, observed_assortativity),
+  Media_Simulada = c(mean(simulated_densities), mean(simulated_transitivities), mean(simulated_assortativities)),
+  Desviación_Simulada = c(sd(simulated_densities), sd(simulated_transitivities), sd(simulated_assortativities)),
+  IC_Inferior = ci_lower,
+  IC_Superior = ci_upper
+)
+
+# Presentar la tabla estilizada
+resultados %>%
+  kbl(
+    caption = "Resumen de las estadísticas observadas y simuladas con intervalos de confianza al 95%",
+    digits = 4,
+    col.names = c("Estadística", "Observado", "Media", "Desviación", "IC Inferior", "IC Superior")
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
+  column_spec(1, bold = TRUE) %>%
+  add_header_above(c(" " = 1, "Estadísticas Observadas y Simuladas" = 5))
 ```
+
 
 
 # Referencias {-}
